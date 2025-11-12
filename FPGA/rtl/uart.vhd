@@ -13,7 +13,7 @@ end entity;
 architecture rtl of uart is
 	signal rst			: std_logic;
 	signal baud_tick	: std_logic;
-	signal rx_reg		: std_logic;
+	signal rx_reg		: std_logic_vector(7 downto 0);
 	signal tx_reg		: std_logic;
 begin
 	
@@ -45,7 +45,8 @@ begin
 	CTRL: entity work.u_ctrl
 	port map (
 		clk => d_clk,
-		rst => rst
+		rst => rst,
+		rx_data => rx_reg
 	);
 	 
 end architecture;
