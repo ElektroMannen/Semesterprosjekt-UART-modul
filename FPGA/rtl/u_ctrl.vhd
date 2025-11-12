@@ -7,7 +7,8 @@ entity u_ctrl is
 		clk			: in  std_logic;
 		rst			: in  std_logic;
 		rx_data		: in	std_logic_vector(7 downto 0);
-		HEX0, HEX1	: out std_logic_vector(7 downto 0)
+		HEX0, HEX1	: out std_logic_vector(7 downto 0);
+		rx_ok			: out std_logic
 	);
 end entity;
 
@@ -42,6 +43,7 @@ architecture rtl of u_ctrl is
 --signals
 	signal data_h, data_l: std_logic_vector(3 downto 0); --data high/low
 	signal rst_n: std_logic;
+	signal led_on: std_logic;
 begin
 	rst_n <= not rst;
 
@@ -60,6 +62,5 @@ begin
 	
 HEX0 <= hex_to_7seg(data_h);
 HEX1 <= hex_to_7seg(data_l);
-
 
 end architecture;
