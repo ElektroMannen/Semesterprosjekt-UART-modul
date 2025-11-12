@@ -1,0 +1,14 @@
+# Quartus
+output_files/
+db/
+simulation/
+incremental_db/
+**/*.vhd.bak
+**/*.qws
+
+# mplab
+_build/
+cmake/
+out/
+**/.vscode/*
+!Testbench/AVR/uart-tb/.vscode/uart-tb.mplab.json
