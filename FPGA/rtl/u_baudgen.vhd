@@ -22,7 +22,7 @@ begin
 		variable count: natural range 0 to oversample_8x-1; --8x oversample (50_000_000/(9600*8))
 	begin
 		if rising_edge(clk) then
-			if rst_n = '1' then
+			if rst_n = '0' then
 				tick_8x <= '0';
 			elsif count=(oversample_8x-1) then
 				count := 0;

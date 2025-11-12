@@ -6,6 +6,16 @@ incremental_db/
 **/*.vhd.bak
 **/*.qws
 
+# Modelsim
+work/
+transcript
+*.cr.mti
+**/sim/*.mpf
+**/sim/*.wlf
+**/sim/*.jou
+**/sim/*.log
+
+
 # mplab
 _build/
 cmake/
