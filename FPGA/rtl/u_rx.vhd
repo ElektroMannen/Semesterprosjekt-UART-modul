@@ -7,13 +7,19 @@ entity u_rx is
 		clk		: in  std_logic;
 		rst		: in  std_logic;
 		tick_8x	: in	std_logic;
-		rx_i		: in	std_logic;
-		rx_o		: out std_logic
+		rx_i	: in	std_logic;
+		rx_o	: out std_logic;
+		led_r0  : out std_logic
 	);
 end entity;
 
 
 architecture rtl of u_rx is
+-- Signals
+   signal LEDR0 <= data_recieved
+   signal prev_signal : std_logic_vector(7 downto 0);
 
-begin
+	begin
+
+	
 end architecture;
