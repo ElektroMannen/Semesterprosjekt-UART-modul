@@ -8,7 +8,7 @@ entity u_rx is
 		rst		: in  std_logic;
 		tick_8x	: in	std_logic;
 		rx_i		: in	std_logic;
-		rx_o		: out std_logic
+		rx_o		: out std_logic_vector(7 downto 0)
 	);
 end entity;
 
