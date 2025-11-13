@@ -3,10 +3,13 @@ use ieee.std_logic_1164.all;
 
 entity uart is
 	port (
-		d_clk: in std_logic; --device clk
-		rst_n: in std_logic;
-		Rx_D: in std_logic;
-		Tx_D: out std_logic
+		d_clk			: in std_logic; --device clk
+		rst_n			: in std_logic;
+		Rx_D			: in std_logic;
+		SW0, SW1		: in std_logic;
+		Tx_D			: out std_logic;
+		LEDR0			: out std_logic;
+		SEG0, SEG1	: out std_logic_vector(7 downto 0)
 	);
 end entity;
 
@@ -30,7 +33,8 @@ begin
 		rst => rst,
 		tick_8x => baud_tick,
 		rx_i => Rx_D,
-		rx_o => rx_reg
+		rx_o => rx_reg,
+		LEDR0 => LEDR0
 	);
 
 	TxD: entity work.u_tx
@@ -46,7 +50,9 @@ begin
 	port map (
 		clk => d_clk,
 		rst => rst,
-		rx_data => rx_reg
+		rx_data => rx_reg,
+		HEX0 => SEG0,
+		HEX1 => SEG1
 	);
 	 
 end architecture;
