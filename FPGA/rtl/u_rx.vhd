@@ -2,16 +2,36 @@ library ieee;
 use ieee.std_logic_1164.all;
 entity u_rx is
 	port (
-		clk     : in std_logic;
-		rst     : in std_logic;
-		tick_8x : in std_logic;
-		rx_i    : in std_logic;
-		rx_o    : out std_logic_vector(7 downto 0);
-		LEDR0   : out std_logic
+		clk     	: in std_logic;
+		rst     	: in std_logic;
+		baud_clk : in std_logic;
+		rx_i    	: in std_logic;
+		rx_o    	: out std_logic_vector(7 downto 0);
+		LEDR0   	: out std_logic
 	);
 end entity;
 
 architecture rtl of u_rx is
+
+    component rx_shiftreg is
+        port (
+            clk       : in  std_logic;
+            rst       : in  std_logic;
+            shift_en  : in  std_logic;
+            rx_bit    : in  std_logic;
+            data      : out std_logic_vector(7 downto 0);
+            bit_cnt   : out integer range 0 to 7;
+            byte_done : out std_logic
+        );
+    end component;
+	 
+    signal sh_data      : std_logic_vector(7 downto 0);
+    signal sh_bit_cnt   : integer range 0 to 7;
+    signal sh_byte_done : std_logic;
+
+    signal shift_en     : std_logic;
+	 
+
 	-- Signals
 	type state_type is (idle, start, data, stop);
 	signal state : state_type := idle;
@@ -78,6 +98,20 @@ architecture rtl of u_rx is
 
 	-- Main prosess
 begin
+    -- instans av shiftregisteret
+		u_shift : rx_shiftreg
+        port map (
+            clk       => clk,
+            rst       => rst,
+            shift_en  => shift_en,
+            rx_bit    => rx_sync,
+            data      => sh_data,
+            bit_cnt   => sh_bit_cnt,
+            byte_done => sh_byte_done
+        );
+
+
+
 	process (clk, rst)
 	begin
 		if rst = '1' then
@@ -91,7 +125,7 @@ begin
 		elsif rising_edge(clk) then
 			rx_sync <= rx_i;
 
-			if tick_8x = '1' then
+			if rising_edge(baud_clk) then
 				tick_cnt <= tick_cnt + 1;
 
 				if f_oversampling(tick_cnt) then

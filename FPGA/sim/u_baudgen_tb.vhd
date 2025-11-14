@@ -12,7 +12,7 @@ end entity;
 architecture SimulationModel of u_baudgen_tb is
 
 constant t_clk : time := 20 ns; --simulate 50MHz clock
-constant oversample_8x  : natural := 651; --8x oversample @9600 baudrate
+--constant oversample_8x  : natural := 651; --8x oversample @9600 baudrate
 
 
 --component u_baudgen
@@ -28,7 +28,8 @@ constant oversample_8x  : natural := 651; --8x oversample @9600 baudrate
 
 signal clk: std_logic;
 signal rst_n : std_logic := '0';
-signal tick_8x: std_logic := '0';
+signal r1: std_logic := '0';
+signal r2: std_logic := '0';
 
 begin
 
@@ -40,11 +41,11 @@ begin
   --);
 
   u_baudgen_test: entity work.u_baudgen
-    generic map (oversample_8x => 651)
+    generic map (oversample_8x => 651/2)
     port map (
       clk => clk,
       rst_n => rst_n,
-      tick => tick_8x
+      baud_clk => r1
     );
 
 	
@@ -68,7 +69,7 @@ begin
 
   -- stimul main
   p_main: process
-    variable tick_count : natural := oversample_8x-1;
+    --variable tick_count : natural := oversample_8x-1;
     variable tick_check_ok : std_logic := '0';
   begin
     wait until rst_n = '1'; -- test reset
@@ -85,8 +86,9 @@ begin
     --   report "Seems good"
     --   severity error;
     -- report "Counted correct oversample period" severity note;
-
-    wait for 13200 ns; --651*20ns+some extra
+    -- rising edge at 13110 ns
+    -- falling edge at 26130 ns
+    wait for 28_000 ns; --651*20ns+some extra
 
     assert false report "Tb finish" severity failure;
   end process p_main;

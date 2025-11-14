@@ -6,7 +6,7 @@ entity u_tx is
 	port (
 		clk		: in	std_logic;
 		rst		: in	std_logic;
-		tick_8x	: in	std_logic;
+		baud_clk	: in	std_logic;
 		tx_i		: in	std_logic;
 		tx_o		: out	std_logic
 	);
