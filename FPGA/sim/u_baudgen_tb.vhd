@@ -27,9 +27,9 @@ constant t_clk : time := 20 ns; --simulate 50MHz clock
 --end component u_baudgen;
 
 signal clk: std_logic;
-signal rst_n : std_logic := '0';
+signal rst : std_logic := '0';
 signal r1: std_logic := '0';
-signal r2: std_logic := '0';
+
 
 begin
 
@@ -41,11 +41,12 @@ begin
   --);
 
   u_baudgen_test: entity work.u_baudgen
-    generic map (oversample_8x => 651/2)
+    generic map (oversample_8x => 651)
     port map (
       clk => clk,
-      rst_n => rst_n,
-      baud_clk => r1
+      rst => rst,
+      rx_baud_tick => r1,
+	tx_baud_tick => r1
     );
 
 	
@@ -61,9 +62,9 @@ begin
   -- reset
   p_rst: process
   begin
-    rst_n <= '0';
+    rst <= '0';
     wait for 5*t_clk; -- hold reset i 100ns
-    rst_n <= '1';      -- slipp reset
+    rst <= '1';      -- slipp reset
     wait;
   end process p_rst;
 
@@ -72,7 +73,7 @@ begin
     --variable tick_count : natural := oversample_8x-1;
     variable tick_check_ok : std_logic := '0';
   begin
-    wait until rst_n = '1'; -- test reset
+    wait until rst = '1'; -- test reset
     wait until rising_edge(clk);
 
     -- for i in 0 to tick_count loop
