@@ -8,6 +8,7 @@ entity u_ctrl is
 		rx_data      : in std_logic_vector(7 downto 0);
 		rx_baud_tick : in std_logic;
 		data_ready   : in std_logic;
+		tx_busy		 : in std_logic;
 		tx_send_en   : out std_logic;
 		HEX0, HEX1   : out std_logic_vector(7 downto 0);
 		rx_ok        : out std_logic

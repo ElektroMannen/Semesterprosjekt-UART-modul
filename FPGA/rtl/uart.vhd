@@ -21,6 +21,7 @@ architecture rtl of uart is
 	signal rx_data_ready : std_logic;
 	signal tx_send_en : std_logic;
 	signal parity_en : std_logic;
+	signal tx_busy : std_logic;
 	--signal tx_reg			: std_logic;
 begin
 	rst <= not rst_n;
@@ -52,6 +53,7 @@ begin
 			tx_i         => rx_reg,
 			send_en      => tx_send_en,
 			p_en		 => parity_en,
+			tx_busy		 => tx_busy,
 			tx_o         => TX_D
 		);
 
@@ -63,6 +65,7 @@ begin
 			rx_baud_tick => rx_baud_tick,
 			data_ready   => rx_data_ready,
 			tx_send_en   => tx_send_en,
+			tx_busy		 => tx_busy,
 			HEX0         => SEG0,
 			HEX1         => SEG1
 		);

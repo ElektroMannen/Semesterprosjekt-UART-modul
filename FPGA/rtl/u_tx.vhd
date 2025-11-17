@@ -12,6 +12,7 @@ entity u_tx is
 		tx_i         : in std_logic_vector(7 downto 0);
 		send_en      : in std_logic;
 		p_en         : in std_logic;
+		tx_busy		 : out std_logic;
 		tx_o         : out std_logic
 	);
 end entity;
@@ -31,7 +32,7 @@ architecture rtl of u_tx is
 
 	signal tx_data_out : std_logic := '1';
 
-	signal tx_busy : std_logic := '0';
+	signal busy : std_logic := '0';
 
 	signal bit_cnt_max : integer range 7 to 8;
 	signal parity_en : std_logic := '0'; --0: off 1: on (SW0?)
@@ -62,7 +63,7 @@ begin
 			bit_cnt <= 0;
 			byte_sent <= '0';
 			tx_data_out <= '1';
-			tx_busy <= '0';
+			busy <= '0';
 			parity_en <= '0';
 			parity_bit <= '0';
 			--latch_enable <= '0';
@@ -79,6 +80,7 @@ begin
 				when idle =>
 					--wait on go signal from ctrl
 					tx_data_out <= '1';
+					tx_busy <= '0';
 
 					if send_en = '1' then
 						in_data(7 downto 0) <= tx_i;
@@ -90,7 +92,7 @@ begin
 						end if;
 
 						--tick_cnt <= 0;
-						tx_busy <= '1';
+						busy <= '1';
 						state <= start;
 						--latch_enable <= '0';
 					end if;
@@ -157,5 +159,7 @@ begin
 		8;
 
 	tx_o <= tx_data_out;
+
+	tx_busy <= busy;
 
 end architecture;
