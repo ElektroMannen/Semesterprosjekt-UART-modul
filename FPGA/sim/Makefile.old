@@ -3,14 +3,19 @@
 GHDL=ghdl
 STD=--std=08
 WAVE=wave.ghw
-TB=u_fifo_tb
+TB=uart_tb
 
 
 # compile
-SRC_RTL=../rtl/u_fifo.vhd
+SRC_RTL= \
+  ../rtl/u_baudgen.vhd \
+  ../rtl/u_rx.vhd \
+  ../rtl/u_tx.vhd \
+  ../rtl/u_ctrl.vhd \
+  ../rtl/rx_shiftreg.vhd \
+  ../rtl/uart.vhd
 
-
-SRC_TB=u_fifo_tb.vhd
+SRC_TB=uart_tb.vhd
 
 all: run
 
