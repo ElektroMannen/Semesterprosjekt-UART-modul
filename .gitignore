@@ -22,4 +22,12 @@ cmake/
 out/
 **/.vscode/*
 !Testbench/AVR/uart-tb/.vscode/uart-tb.mplab.json
-!FPGA/rtl/.vscode/settings.json
+
+
+# vhdl format
+!FPGA/.vscode/settings.json
+
+
+# ghdl
+*.ghw
+*.cf
