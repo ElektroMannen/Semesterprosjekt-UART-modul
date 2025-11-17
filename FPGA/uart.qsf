@@ -72,3 +72,5 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 set_location_assignment PIN_C10 -to SW0
 set_location_assignment PIN_C11 -to SW1
 set_location_assignment PIN_A8 -to LEDR0
+set_location_assignment PIN_B8 -to KEY0
+set_location_assignment PIN_A7 -to KEY1
