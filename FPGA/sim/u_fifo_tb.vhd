@@ -6,18 +6,18 @@ entity u_fifo_tb is
 end entity;
 
 architecture sim of u_fifo_tb is
-    signal clk      : std_logic := '0';
-    signal rst      : std_logic := '0';
+    signal clk : std_logic := '0';
+    signal rst : std_logic := '0';
     --signal addr     : std_logic_vector(4 downto 0) := (others => '0');
-    signal data_in  : std_logic_vector(7 downto 0) := (others => '0');
+    signal data_in : std_logic_vector(7 downto 0) := (others => '0');
     signal data_out : std_logic_vector(7 downto 0);
-    signal we       : std_logic := '0';
-    signal re       : std_logic := '0';
+    signal we : std_logic := '0';
+    signal re : std_logic := '0';
 
 begin
 
-    DUT: entity work.u_fifo
-        port map (
+    DUT : entity work.u_fifo
+        port map(
             clk      => clk,
             rst      => rst,
             --addr     => addr,
@@ -26,8 +26,6 @@ begin
             we       => we,
             re       => re
         );
-
-
     clk_p : process
     begin
         clk <= '0';
@@ -45,12 +43,10 @@ begin
         wait for 150 ns;
 
         data_in <= x"AA";
-        we      <= '1';
+        we <= '1';
         wait for 20 ns;
-        we      <= '0';
+        we <= '0';
         wait for 20 ns;
-
-        
         wait for 1 ms;
         std.env.stop;
         wait;

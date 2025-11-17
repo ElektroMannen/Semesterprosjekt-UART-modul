@@ -4,13 +4,13 @@ use ieee.numeric_std.all;
 
 entity u_fifo is
     port (
-        clk      : in  std_logic;
-        rst      : in  std_logic;
+        clk      : in std_logic;
+        rst      : in std_logic;
         --addr     : in  std_logic_vector(4 downto 0);
-        data_in  : in  std_logic_vector(7 downto 0);
+        data_in  : in std_logic_vector(7 downto 0);
         data_out : out std_logic_vector(7 downto 0);
-        we       : in  std_logic; --write enable
-        re      :  in std_logic
+        we       : in std_logic; --write enable
+        re       : in std_logic
     );
 end entity;
 
@@ -21,7 +21,7 @@ architecture rtl of u_fifo is
     signal prt_o : integer range 0 to 16 := 0;
 begin
 
-    process(clk)
+    process (clk)
     begin
         if rst = '1' then
             --reset things
@@ -31,6 +31,4 @@ begin
             end if;
         end if;
     end process;
-
-
 end architecture;
