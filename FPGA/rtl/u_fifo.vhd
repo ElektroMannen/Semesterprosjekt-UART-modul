@@ -15,20 +15,57 @@ entity u_fifo is
 end entity;
 
 architecture rtl of u_fifo is
-    type fifo_reg_t is array (0 to 31) of std_logic_vector(7 downto 0);
+    type fifo_reg_t is array (0 to 15) of std_logic_vector(7 downto 0);
     signal registers : fifo_reg_t;
-    signal ptr_i : integer range 0 to 16 := 0;
-    signal prt_o : integer range 0 to 16 := 0;
+    
+    --signal p_ptr : integer range 0 to 16 := 0;
+    signal p_ptr : unsigned(3 downto 0) := (others => '0'); --producer
+    signal c_ptr : unsigned(3 downto 0) := (others => '0'); --consumer
+    signal full : std_logic := '0';
+    signal c_update : std_logic := '0';
+    signal items : integer range 0 to 16 := 0;
+    signal reg_full : std_logic;
+
 begin
 
-    process (clk)
+    process (clk, rst)
+        variable temp_data : std_logic_vector(7 downto 0);
+
     begin
         if rst = '1' then
+            c_update <= '0';
             --reset things
+            --for i in registers'range loop
+            --    registers(i) <= (others => '0');
+            --end loop;
         elsif rising_edge(clk) then
+            
             if we = '1' then
-                registers(ptr_i) <= data_in;
+                
+                registers(to_integer(p_ptr)) <= data_in;
+                
+                if reg_full = '0' then
+                    items <= items + 1;
+                    p_ptr <= p_ptr + 1;
+                end if;
+                
+            elsif re = '1' then
+                
+                if items /= 0 then
+                    data_out <= registers(to_integer(c_ptr));
+                    c_update <= '1';
+                    c_ptr <= c_ptr + 1;
+                    items <= items - 1;
+                end if;
+
+                registers(to_integer(c_ptr)) <= (others => '0');
+                
             end if;
+            
         end if;
     end process;
+
+    reg_full <= '1' when items = 16 else '0';
+
+
 end architecture;

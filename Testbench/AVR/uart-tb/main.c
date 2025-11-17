@@ -5,14 +5,18 @@
 * @brief Main function
 * credit to https://github.com/microchip-pic-avr-examples/avr128da48-usart-example
 */
-#include <avr/io.h>
-#include <util/delay.h>
-#include <string.h>
 
 #ifndef F_CPU
 #define F_CPU 4000000UL
 #endif
 #define F_SAMPLE_BIT 16
+
+
+
+#include <avr/io.h>
+#include <util/delay.h>
+#include <string.h>
+
 
 // 64*4 000 000/16 * 9600 + 0.5 = 1667.17
 #define USART1_BAUD_RATE(BAUD_RATE)     ((float)(64 * F_CPU / (F_SAMPLE_BIT * (float)BAUD_RATE)) + 0.5)
@@ -40,7 +44,7 @@ void USART1_init(void)
 
 void USART1_sendChar(char c)
 {
-    while(!(USART0.STATUS & USART_DREIF_bm))
+    while(!(USART1.STATUS & USART_DREIF_bm))
     {
         ;
     }
@@ -64,7 +68,7 @@ int main(void)
     
     while (1)
     {
-        for (int i = 0; i <= 10; i++) {
+        for (int i = 0; i <= 9; i++) {
             USART1_sendChar(a[i]);
             _delay_ms(1000);
         }

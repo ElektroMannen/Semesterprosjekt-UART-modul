@@ -145,6 +145,12 @@ begin
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
+
+        data_in <= x"FF";
+        we <= '1';
+        wait for 20 ns;
+        we <= '0';
+        wait for 20 ns;
         
         wait for 100 ns;
 
@@ -153,10 +159,22 @@ begin
         re <= '0';
         wait for 20 ns;        
 
+        wait for 100 ns;
+
+        data_in <= x"FF";
+        we <= '1';
+        wait for 20 ns;
+        we <= '0';
+        wait for 20 ns;
+
+        wait for 100 ns;
+
         re <= '1';
         wait for 20 ns;
         re <= '0';
         wait for 20 ns;
+
+        wait for 100 ns;
 
         re <= '1';
         wait for 20 ns;

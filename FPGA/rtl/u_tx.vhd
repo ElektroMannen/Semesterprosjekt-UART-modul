@@ -36,7 +36,7 @@ architecture rtl of u_tx is
 
 	signal bit_cnt_max : integer range 7 to 8;
 	signal parity_en : std_logic := '0'; --0: off 1: on (SW0?)
-	signal parity_bit : std_logic := '0';
+	signal parity_bit : std_logic;
 	signal parity_mode : std_logic := '0'; --0: even 1: odd (SW1?)
 
 	signal parity_sum : integer range 0 to 7;
@@ -65,7 +65,7 @@ begin
 			tx_data_out <= '1';
 			busy <= '0';
 			parity_en <= '0';
-			parity_bit <= '0';
+			--parity_bit <= '0';
 			--latch_enable <= '0';
 
 		elsif rising_edge(clk) then
@@ -80,15 +80,19 @@ begin
 				when idle =>
 					--wait on go signal from ctrl
 					tx_data_out <= '1';
-					tx_busy <= '0';
+					busy <= '0';
 
 					if send_en = '1' then
 						in_data(7 downto 0) <= tx_i;
 
 						--add parity
 						if parity_en = '1' then
-							in_data(8) <= parity_bit when parity_mode = '0' else
-							not parity_bit;
+							if parity_mode = '0' then
+								in_data(8) <= parity_bit;
+							else
+								in_data(8) <= not parity_bit;
+							end if;
+							-- when (parity_mode = '0') else (not parity_bit);
 						end if;
 
 						--tick_cnt <= 0;
@@ -155,8 +159,7 @@ begin
 
 	parity_bit <= xor_parity(tx_i);
 
-	bit_cnt_max <= 7 when (parity_en = '0') else
-		8;
+	bit_cnt_max <= 7 when parity_en = '0' else 8;
 
 	tx_o <= tx_data_out;
 
