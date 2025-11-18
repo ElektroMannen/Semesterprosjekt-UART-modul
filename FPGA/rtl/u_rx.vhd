@@ -121,16 +121,16 @@ begin
     begin
         --Reset logic
         if rst = '1' then
-            state <= idle;
-            tick_cnt <= (others => '0');
+            state        <= idle;
+            tick_cnt     <= (others => '0');
             data_ready_i <= '0';
-            rx_sync <= '1';
-            shift_en <= '0';
-            sh_clear <= '0';
+            rx_sync      <= '1';
+            shift_en     <= '0';
+            sh_clear     <= '0';
 
         elsif rising_edge(clk) then
-            rx_sync <= rx_i;
-            shift_en <= '0';
+            rx_sync      <= rx_i;
+            shift_en     <= '0';
             data_ready_i <= '0';
 
             if rx_baud_tick = '1' then
@@ -139,16 +139,16 @@ begin
                     tick_cnt <= (others => '0');
                 else
                     tick_cnt <= tick_cnt + 1;
-                end if
+                end if;
+
                 case state is
-
                     when idle =>
-                        sh_clear <= '0';
+                        sh_clear     <= '0';
                         data_ready_i <= '0';
-                        tick_cnt <= (others => '0');
+                        tick_cnt     <= (others => '0');
 
-                        if rx_sync = '0' then --data detected
-                            state <= start;
+                        if rx_sync    = '0' then --data detected
+                            state    <= start;
                             tick_cnt <= (others => '0'); --initialize counter
                         end if;
 
@@ -183,7 +183,7 @@ begin
 
                             if rx_sync = '1' then
                                 data_ready_i <= '1';
-                                sh_clear <= '1';
+                                sh_clear     <= '1';
                                 --rx_rst_byte_done <= '1';
                             end if;
 
@@ -197,8 +197,8 @@ begin
         end if;
     end process;
 
-    LEDR0 <= data_ready_i;
+    LEDR0      <= data_ready_i;
     data_ready <= data_ready_i;
-    rx_o <= (others => '0') when data_ready_i = '0' else
+    rx_o       <= (others => '0') when data_ready_i = '0' else
         sh_data;
 end architecture;
