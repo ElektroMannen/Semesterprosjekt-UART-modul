@@ -119,6 +119,7 @@ begin
 
     process (clk, rst)
     begin
+        --Reset logic
         if rst = '1' then
             state <= idle;
             tick_cnt <= (others => '0');
@@ -133,6 +134,12 @@ begin
             data_ready_i <= '0';
 
             if rx_baud_tick = '1' then
+                -- 8x Oversampeling reset
+                if tick_cnt = 7 then
+                    tick_cnt <= (others => '0');
+                else
+                    tick_cnt <= tick_cnt + 1;
+                end if
                 case state is
 
                     when idle =>
