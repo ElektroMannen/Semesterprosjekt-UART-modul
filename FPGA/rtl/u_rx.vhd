@@ -9,7 +9,8 @@ entity u_rx is
         rx_i         : in std_logic;
         rx_o         : out std_logic_vector(7 downto 0);
         LEDR0        : out std_logic;
-        data_ready   : out std_logic
+        data_ready   : out std_logic;
+        bit_mid      : out std_logic
     );
 end entity;
 
@@ -87,10 +88,10 @@ architecture rtl of u_rx is
     --end function;
 
     --return true when middle of oversample frequency
-    function f_oversampling(cnt : integer) return boolean is
-    begin
-        return (cnt = 3);
-    end function;
+   -- function f_oversampling(cnt : integer) return boolean is
+   -- begin
+   --     return (cnt = 3);
+   -- end function;
 
     -- sjekker stop bit for å skru av og på LEDR0 
     --function f_data_ready(state : state_type; rx_sample : std_logic) return std_logic is
@@ -134,13 +135,22 @@ begin
             data_ready_i <= '0';
 
             if rx_baud_tick = '1' then
-                -- 8x Oversampeling reset
+                -- 8x Oversampeling logic
                 if tick_cnt = 7 then
                     tick_cnt <= (others => '0');
                 else
                     tick_cnt <= tick_cnt + 1;
                 end if;
 
+                -- Find middle of bit
+                if tick_cnt = 3 then
+                    --SHIFTREG_SIGNAL_HERE <= rx_i; -- Stores bit balue
+                    bit_mid_i  <= '1';
+                else
+                    bit_mid_i <= '0';
+                end if;
+
+                -- UART statemachine logic
                 case state is
                     when idle =>
                         sh_clear     <= '0';

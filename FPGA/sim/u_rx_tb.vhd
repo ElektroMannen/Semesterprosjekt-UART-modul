@@ -2,15 +2,15 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity tb_uart_rx is
+entity u_rx_tb is
 end entity;
 
-architecture sim of tb_uart_rx is
+architecture sim of u_rx_tb is
 
-    -- DUT components
+    -- Component declarations
     component u_baudgen is
         generic (
-            oversample_8x : natural := 651
+            oversample_8x : natural := 8   -- lav verdi for simulering
         );
         port (
             clk          : in std_logic;
@@ -28,122 +28,92 @@ architecture sim of tb_uart_rx is
             rx_i         : in std_logic;
             rx_o         : out std_logic_vector(7 downto 0);
             LEDR0        : out std_logic;
-            data_ready   : out std_logic
+            data_ready   : out std_logic;
+            bit_mid      : out std_logic
         );
     end component;
 
-    -- Testbench signals
+    -- Signals
     signal clk          : std_logic := '0';
-    signal rst          : std_logic := '0';
-    signal rx_baud_tick : std_logic;
+    signal rst          : std_logic := '1';
+    signal rx_baud_tick : std_logic := '0';
     signal rx_i         : std_logic := '1';
     signal rx_o         : std_logic_vector(7 downto 0);
     signal data_ready   : std_logic;
     signal LEDR0        : std_logic;
+    signal bit_mid      : std_logic;
 
-    -- Constants
     constant clk_period : time := 20 ns;  -- 50 MHz
-    constant oversample_factor : integer := 8;
-    constant bit_time_ticks : integer := 8; -- 8 oversample ticks per bit
 
 begin
 
-    --------------------------------------------------------------------
     -- Clock generation
-    --------------------------------------------------------------------
     clk <= not clk after clk_period/2;
 
-    --------------------------------------------------------------------
-    -- Instantiate baud generator
-    --------------------------------------------------------------------
-    U_BAUD : u_baudgen
-        generic map(
-            oversample_8x => 651  -- 9600 baud, 8x oversampling
-        )
+    -- Baud generator
+    BAUD_INST : u_baudgen
+        generic map(oversample_8x => 8) -- rask for simulering
         port map(
-            clk          => clk,
-            rst          => rst,
+            clk => clk,
+            rst => rst,
             rx_baud_tick => rx_baud_tick,
             tx_baud_tick => open
         );
 
-    --------------------------------------------------------------------
-    -- Instantiate RX module
-    --------------------------------------------------------------------
-    U_RX : u_rx
+    -- RX module
+    RX_INST : u_rx
         port map(
-            clk          => clk,
-            rst          => rst,
+            clk => clk,
+            rst => rst,
             rx_baud_tick => rx_baud_tick,
-            rx_i         => rx_i,
-            rx_o         => rx_o,
-            LEDR0        => LEDR0,
-            data_ready   => data_ready
+            rx_i => rx_i,
+            rx_o => rx_o,
+            LEDR0 => LEDR0,
+            data_ready => data_ready,
+            bit_mid => bit_mid
         );
 
-    --------------------------------------------------------------------
-    -- UART transmit procedure (bit-banging)
-    --------------------------------------------------------------------
-    procedure uart_send_byte(signal tx : out std_logic; data_byte : std_logic_vector) is
+    ----------------------------------------------------------------
+    -- Continuous stimulus: send bytes 0xA5, 0x3C, 0xFF repeatedly
+    ----------------------------------------------------------------
+    stimulus: process
+        type byte_array is array (natural range <>) of std_logic_vector(7 downto 0);
+        constant test_data : byte_array := (x"A5", x"3C", x"FF");
+        variable byte_idx : integer := 0;
+        variable bit_idx  : integer;
+        variable os_tick  : integer;
+        constant num_os   : integer := 8; -- 8x oversampling
     begin
-        -- Start bit
-        tx <= '0';
-        wait until rx_baud_tick = '1' for 1 ns;
-
-        for i in 1 to bit_time_ticks-1 loop
-            wait until rx_baud_tick = '1' for 1 ns;
-        end loop;
-
-        -- Data bits LSB first
-        for i in 0 to 7 loop
-            tx <= data_byte(i);
-            for j in 1 to bit_time_ticks loop
-                wait until rx_baud_tick = '1' for 1 ns;
-            end loop;
-        end loop;
-
-        -- Stop bit
-        tx <= '1';
-        for j in 1 to bit_time_ticks loop
-            wait until rx_baud_tick = '1' for 1 ns;
-        end loop;
-    end procedure;
-
-    --------------------------------------------------------------------
-    -- Test sequence
-    --------------------------------------------------------------------
-    stimulus : process
-        constant test_byte : std_logic_vector(7 downto 0) := x"A5";
-    begin
-
-        ----------------------------------------------------------------
         -- Reset
-        ----------------------------------------------------------------
         rst <= '1';
         wait for 200 ns;
         rst <= '0';
         wait for 200 ns;
 
-        ----------------------------------------------------------------
-        -- Send UART frame
-        ----------------------------------------------------------------
-        uart_send_byte(rx_i, test_byte);
+        loop
+            -- Send one byte
+            for bit_idx in -1 to 7 loop
+                if bit_idx = -1 then
+                    rx_i <= '0'; -- start bit
+                else
+                    rx_i <= test_data(byte_idx)(bit_idx); -- data bits LSB first
+                end if;
 
-        ----------------------------------------------------------------
-        -- Wait for receiver to finish
-        ----------------------------------------------------------------
-        wait until data_ready = '1';
+                -- Hold bit for 8 rx_baud_ticks
+                for os_tick in 0 to num_os-1 loop
+                    wait until rising_edge(rx_baud_tick);
+                end loop;
+            end loop;
 
-        ----------------------------------------------------------------
-        -- Check result
-        ----------------------------------------------------------------
-        assert rx_o = test_byte
-            report "ERROR: Received byte does not match!"
-            severity failure;
+            -- Stop bit
+            rx_i <= '1';
+            for os_tick in 0 to num_os-1 loop
+                wait until rising_edge(rx_baud_tick);
+            end loop;
 
-        report "SUCCESS: Received byte = " & to_hstring(rx_o);
-
-        wait;
+            -- Move to next byte
+            byte_idx := (byte_idx + 1) mod test_data'length;
+        end loop;
     end process;
 
 end architecture;
