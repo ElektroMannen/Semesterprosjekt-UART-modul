@@ -29,6 +29,8 @@ constant t_clk : time := 20 ns; --simulate 50MHz clock
 signal clk: std_logic;
 signal rst : std_logic := '0';
 signal r1: std_logic := '0';
+signal clk_i : std_logic := '0';
+signal clk_j : std_logic := '0';
 
 
 begin
@@ -45,8 +47,8 @@ begin
     port map (
       clk => clk,
       rst => rst,
-      rx_baud_tick => r1,
-	tx_baud_tick => r1
+      rx_baud_tick => clk_i,
+	    tx_baud_tick => clk_j
     );
 
 	
@@ -91,7 +93,11 @@ begin
     -- falling edge at 26130 ns
     wait for 28_000 ns; --651*20ns+some extra
 
-    assert false report "Tb finish" severity failure;
+    --assert false report "Tb finish" severity failure;
+    wait for 1 ms;
+    std.env.stop;
+    wait;
+
   end process p_main;
 
 end architecture SimulationModel;
