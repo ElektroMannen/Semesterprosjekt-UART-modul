@@ -5,6 +5,17 @@ simulation/
 incremental_db/
 **/*.vhd.bak
 **/*.qws
+devkits/
+
+# Modelsim
+work/
+transcript
+*.cr.mti
+**/sim/*.mpf
+**/sim/*.wlf
+**/sim/*.jou
+**/sim/*.log
+
 
 # mplab
 _build/
@@ -12,3 +23,12 @@ cmake/
 out/
 **/.vscode/*
 !Testbench/AVR/uart-tb/.vscode/uart-tb.mplab.json
+
+
+# vhdl format
+!FPGA/.vscode/settings.json
+
+
+# ghdl
+*.ghw
+*.cf
