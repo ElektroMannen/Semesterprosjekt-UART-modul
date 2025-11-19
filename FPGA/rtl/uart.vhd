@@ -7,6 +7,7 @@ entity uart is
 		rst_n      : in std_logic;
 		Rx_D       : in std_logic;
 		SW0, SW1   : in std_logic;
+		baud_ctrl  : in std_logic_vector(1 downto 0);
 		Tx_D       : out std_logic;
 		LEDR0      : out std_logic;
 		SEG0, SEG1 : out std_logic_vector(7 downto 0)
@@ -22,16 +23,18 @@ architecture rtl of uart is
 	signal tx_send_en : std_logic;
 	signal parity_en : std_logic;
 	signal tx_busy : std_logic;
+	signal ctrl_baud_sel : std_logic_vector(1 downto 0);
 	--signal tx_reg			: std_logic;
 begin
 	rst <= not rst_n;
 
 	BAUD : entity work.u_baudgen
 		port map(
-			clk          => sys_clk,
-			rst          => rst,
-			tx_baud_tick => tx_baud_tick,
-			rx_baud_tick => rx_baud_tick
+			clk          	=> sys_clk,
+			rst          	=> rst,
+			baud_sel	 	=> ctrl_baud_sel,
+			tx_baud_tick 	=> tx_baud_tick,
+			rx_baud_tick_8x => rx_oversample_tick
 		);
 
 	RxD : entity work.u_rx
@@ -62,10 +65,12 @@ begin
 			clk          => sys_clk,
 			rst          => rst,
 			rx_data      => rx_reg,
-			rx_baud_tick => rx_baud_tick,
+			rx_baud_tick => rx_oversample_tick,
 			data_ready   => rx_data_ready,
 			tx_send_en   => tx_send_en,
 			tx_busy		 => tx_busy,
+			baud_ctrl	 => baud_ctrl,
+			baud_sel	 => ctrl_baud_sel,
 			HEX0         => SEG0,
 			HEX1         => SEG1
 		);

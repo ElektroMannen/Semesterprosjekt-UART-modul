@@ -59,7 +59,7 @@ begin
 		if rst = '1' then
 			state <= idle;
 			in_data <= (others => '0');
-			tick_cnt <= 0;
+			--tick_cnt <= 0;
 			bit_cnt <= 0;
 			byte_sent <= '0';
 			tx_data_out <= '1';
@@ -107,12 +107,12 @@ begin
 					tx_data_out <= '0';
 
 					if baud_tick = '1' then
-						if tick_cnt = 7 then
+						--if tick_cnt = 7 then
 							state <= data;
-							tick_cnt <= 0;
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--	tick_cnt <= 0;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 
 				when data =>
@@ -121,10 +121,10 @@ begin
 
 						tx_data_out <= in_data(bit_cnt);
 
-						if tick_cnt = 7 then
+						--if tick_cnt = 7 then
 
 							if bit_cnt = bit_cnt_max then
-								tick_cnt <= 0;
+						--		tick_cnt <= 0;
 								bit_cnt <= 0;
 								byte_sent <= '1';
 								state <= stop;
@@ -132,11 +132,11 @@ begin
 								bit_cnt <= bit_cnt + 1;
 							end if;
 
-							tick_cnt <= 0;
+						--	tick_cnt <= 0;
 
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 
 				when stop =>
@@ -145,17 +145,16 @@ begin
 						--signal stop-bit
 						tx_data_out <= '1';
 
-						if tick_cnt = 7 then
+						--if tick_cnt = 7 then
 							state <= idle;
-							tick_cnt <= 0;
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--	tick_cnt <= 0;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 			end case;
 		end if;
 	end process;
-	--TODO: make parity mode process for even odd or none
 
 	parity_bit <= xor_parity(tx_i);
 

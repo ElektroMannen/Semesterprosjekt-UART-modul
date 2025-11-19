@@ -33,6 +33,8 @@ architecture rtl of u_rx is
     signal bit_cnt : integer range 0 to 7 := 0;
     --signal byte_done : std_logic;
 
+    signal bit_mid_i : std_logic := '0';
+
     signal shift_en : std_logic;
     -- Signals
     type state_type is (idle, start, data, stop);
@@ -206,6 +208,8 @@ begin
             end if;
         end if;
     end process;
+
+    bit_mid <= bit_mid_i;
 
     LEDR0      <= data_ready_i;
     data_ready <= data_ready_i;
