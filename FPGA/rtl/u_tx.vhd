@@ -8,7 +8,7 @@ entity u_tx is
 	port (
 		clk          : in std_logic;
 		rst          : in std_logic;
-		tx_baud_tick : in std_logic;
+		baud_tick 	 : in std_logic;
 		tx_i         : in std_logic_vector(7 downto 0);
 		send_en      : in std_logic;
 		p_en         : in std_logic;
@@ -59,7 +59,7 @@ begin
 		if rst = '1' then
 			state <= idle;
 			in_data <= (others => '0');
-			tick_cnt <= 0;
+			--tick_cnt <= 0;
 			bit_cnt <= 0;
 			byte_sent <= '0';
 			tx_data_out <= '1';
@@ -106,25 +106,25 @@ begin
 					--latch_enable <= '0';
 					tx_data_out <= '0';
 
-					if tx_baud_tick = '1' then
-						if tick_cnt = 7 then
+					if baud_tick = '1' then
+						--if tick_cnt = 7 then
 							state <= data;
-							tick_cnt <= 0;
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--	tick_cnt <= 0;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 
 				when data =>
 					--process of sending
-					if tx_baud_tick = '1' then
+					if baud_tick = '1' then
 
 						tx_data_out <= in_data(bit_cnt);
 
-						if tick_cnt = 7 then
+						--if tick_cnt = 7 then
 
 							if bit_cnt = bit_cnt_max then
-								tick_cnt <= 0;
+						--		tick_cnt <= 0;
 								bit_cnt <= 0;
 								byte_sent <= '1';
 								state <= stop;
@@ -132,30 +132,29 @@ begin
 								bit_cnt <= bit_cnt + 1;
 							end if;
 
-							tick_cnt <= 0;
+						--	tick_cnt <= 0;
 
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 
 				when stop =>
-					if tx_baud_tick = '1' then
+					if baud_tick = '1' then
 
 						--signal stop-bit
 						tx_data_out <= '1';
 
-						if tick_cnt = 7 then
+						--if tick_cnt = 7 then
 							state <= idle;
-							tick_cnt <= 0;
-						else
-							tick_cnt <= tick_cnt + 1;
-						end if;
+						--	tick_cnt <= 0;
+						--else
+						--	tick_cnt <= tick_cnt + 1;
+						--end if;
 					end if;
 			end case;
 		end if;
 	end process;
-	--TODO: make parity mode process for even odd or none
 
 	parity_bit <= xor_parity(tx_i);
 

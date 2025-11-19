@@ -9,6 +9,8 @@ entity u_ctrl is
 		rx_baud_tick : in std_logic;
 		data_ready   : in std_logic;
 		tx_busy		 : in std_logic;
+		baud_ctrl	 : in std_logic_vector(1 downto 0);
+		baud_sel	 : out std_logic_vector(1 downto 0);
 		tx_send_en   : out std_logic;
 		HEX0, HEX1   : out std_logic_vector(7 downto 0);
 		rx_ok        : out std_logic
@@ -46,6 +48,7 @@ architecture rtl of u_ctrl is
 	signal led_on : std_logic;
 	signal on_time : integer range 0 to 1000 := 0; --latch for 10 rx ticks
 	signal loopback_en : std_logic := '1';
+	signal baud_sel_reg : std_logic_vector(1 downto 0);
 begin
 
 	p1 : process (clk, rst)
@@ -56,6 +59,7 @@ begin
 			led_on <= '0';
 			on_time <= 0;
 			loopback_en <= '1';
+			baud_sel_reg <= "00";
 		elsif rising_edge(clk) then
 			if rx_baud_tick = '1' then
 				on_time <= on_time + 1;
@@ -84,9 +88,11 @@ begin
 	end process;
 
 	--echo loopback ok
+
 	tx_send_en <= data_ready when (loopback_en = '1') else
 		'0';
 	rx_ok <= led_on;
+	baud_sel <= baud_ctrl;
 	HEX0 <= hex_to_7seg(data_h);
 	HEX1 <= hex_to_7seg(data_l);
 

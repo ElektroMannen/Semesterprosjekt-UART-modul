@@ -5,7 +5,7 @@ entity u_rx is
     port (
         clk          : in std_logic;
         rst          : in std_logic;
-        rx_baud_tick : in std_logic;
+        baud_tick_8x : in std_logic;
         rx_i         : in std_logic;
         rx_o         : out std_logic_vector(7 downto 0);
         LEDR0        : out std_logic;
@@ -32,6 +32,8 @@ architecture rtl of u_rx is
     signal sh_data : std_logic_vector(7 downto 0);
     signal bit_cnt : integer range 0 to 7 := 0;
     --signal byte_done : std_logic;
+
+    signal bit_mid_i : std_logic := '0';
 
     signal shift_en : std_logic;
     -- Signals
@@ -134,7 +136,7 @@ begin
             shift_en     <= '0';
             data_ready_i <= '0';
 
-            if rx_baud_tick = '1' then
+            if baud_tick_8x = '1' then
                 -- 8x Oversampeling logic
                 if tick_cnt = 7 then
                     tick_cnt <= (others => '0');
@@ -206,6 +208,8 @@ begin
             end if;
         end if;
     end process;
+
+    bit_mid <= bit_mid_i;
 
     LEDR0      <= data_ready_i;
     data_ready <= data_ready_i;
