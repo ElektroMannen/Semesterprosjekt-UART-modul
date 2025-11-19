@@ -12,29 +12,39 @@ entity u_baudgen is
 	);
 end entity;
 architecture rtl of u_baudgen is
+	function baud_rate(f_clk : integer) return integer is
+	begin
+		return 50_000_000 / f_clk;
+	end function;
+
 	--sigmals
 	signal r1 : std_logic := '0';
+	signal clk_i : std_logic := '0';
+	signal clk_j : std_logic := '0';
+	signal speed : integer range 0 to 6000 := 0;
 begin
 
 	--Generate baud-oversample tick
-	p_main : process (clk, rst)
-		variable count : natural range 0 to (oversample_8x - 1); --8x oversample (50_000_000/(9600*8))
+	p_clk : process (clk)
+		variable counter_i : natural range 0 to baud_rate(9600);
+		--variable clk_j : natural range 0 to baud_rate(9600); --8x oversample (50_000_000/(9600*8))
 	begin
-		if rst = '1' then
-			r1 <= '1';
-			count := 0;
-		elsif rising_edge(clk) then
-			if count = (oversample_8x - 1) then
-				r1 <= '1';
-				count := 0;
+		if rising_edge(clk) then
+			if counter_i = (baud_rate(9600) - 1) then
+				--r1 <= '1';
+				clk_i <= not clk_i;
+				clk_j <= not clk_j;
+				counter_i := 0;
+				speed <= baud_rate(9600);
 			else
-				count := count + 1;
-				r1 <= '0';
+				counter_i := counter_i + 1;
+				--r1 <= '0';
 			end if;
 		end if;
 	end process;
 
-	rx_baud_tick <= r1;
-	tx_baud_tick <= r1;
+
+	rx_baud_tick <= clk_i;
+	tx_baud_tick <= clk_j;
 
 end architecture;
