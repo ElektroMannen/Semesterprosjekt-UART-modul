@@ -5,7 +5,7 @@ entity u_rx is
     port (
         clk          : in std_logic;
         rst          : in std_logic;
-        rx_baud_tick : in std_logic;
+        baud_tick_8x : in std_logic;
         rx_i         : in std_logic;
         rx_o         : out std_logic_vector(7 downto 0);
         LEDR0        : out std_logic;
@@ -134,7 +134,7 @@ begin
             shift_en     <= '0';
             data_ready_i <= '0';
 
-            if rx_baud_tick = '1' then
+            if baud_tick_8x = '1' then
                 -- 8x Oversampeling logic
                 if tick_cnt = 7 then
                     tick_cnt <= (others => '0');

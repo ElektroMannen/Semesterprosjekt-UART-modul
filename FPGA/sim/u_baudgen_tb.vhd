@@ -28,10 +28,9 @@ constant t_clk : time := 20 ns; --simulate 50MHz clock
 
 signal clk: std_logic;
 signal rst : std_logic := '0';
-signal r1: std_logic := '0';
-signal clk_i : std_logic := '0';
-signal clk_j : std_logic := '0';
-
+signal oversample_tick : std_logic := '0';
+signal baud_tick : std_logic := '0';
+signal baud_sel_tb : std_logic_vector(1 downto 0) := "00";
 
 begin
 
@@ -43,12 +42,13 @@ begin
   --);
 
   u_baudgen_test: entity work.u_baudgen
-    generic map (oversample_8x => 651)
+    --generic map (OVERSAMPLE => 651)
     port map (
       clk => clk,
       rst => rst,
-      rx_baud_tick => clk_i,
-	    tx_baud_tick => clk_j
+      baud_sel => baud_sel_tb,
+      rx_baud_tick_8x => oversample_tick,
+	    tx_baud_tick => baud_tick
     );
 
 	
@@ -64,18 +64,18 @@ begin
   -- reset
   p_rst: process
   begin
-    rst <= '0';
+    rst <= '1';
     wait for 5*t_clk; -- hold reset i 100ns
-    rst <= '1';      -- slipp reset
+    rst <= '0';      -- slipp reset
     wait;
   end process p_rst;
 
   -- stimul main
   p_main: process
     --variable tick_count : natural := oversample_8x-1;
-    variable tick_check_ok : std_logic := '0';
+    --variable tick_check_ok : std_logic := '0';
   begin
-    wait until rst = '1'; -- test reset
+    wait until rst = '0'; -- test reset
     wait until rising_edge(clk);
 
     -- for i in 0 to tick_count loop
@@ -84,6 +84,14 @@ begin
     --     tick_check_ok := '1';
     --   end if;
     -- end loop;
+
+    wait for 1 ms;
+
+    baud_sel_tb <= "01";
+
+    wait for 1 ms;
+
+    baud_sel_tb <= "11";
 
     -- assert tick_check_ok = '1'; --ok ok
     --   report "Seems good"
