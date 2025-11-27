@@ -13,6 +13,7 @@ SRC_RTL= \
   ../rtl/u_tx.vhd \
   ../rtl/u_ctrl.vhd \
   ../rtl/rx_shiftreg.vhd \
+  ../rtl/u_fifo.vhd \
   ../rtl/uart.vhd
 
 SRC_TB=uart_tb.vhd
