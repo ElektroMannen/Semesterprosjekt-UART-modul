@@ -18,12 +18,16 @@ architecture rtl of uart is
 	signal rst : std_logic;
 	signal rx_oversample_tick : std_logic;
 	signal tx_baud_tick : std_logic;
-	signal rx_reg : std_logic_vector(7 downto 0);
+	signal data_bus : std_logic_vector(7 downto 0);
 	signal rx_data_ready : std_logic;
-	signal tx_send_en : std_logic;
+	signal tx_en : std_logic; -- enable send from tx
 	signal parity_en : std_logic;
 	signal tx_busy : std_logic;
 	signal ctrl_baud_sel : std_logic_vector(1 downto 0);
+	signal write_en : std_logic;
+	signal read_en : std_logic;
+	signal data_out : std_logic_vector(7 downto 0);
+	signal fifo_empty : std_logic;
 	--signal tx_reg			: std_logic;
 begin
 	rst <= not rst_n;
@@ -43,7 +47,7 @@ begin
 			rst          	=> rst,
 			baud_tick_8x 	=> rx_oversample_tick, --8x oversample
 			rx_i         	=> Rx_D,
-			rx_o         	=> rx_reg,
+			data_bus        => data_bus,
 			LEDR0        	=> LEDR0,
 			data_ready   	=> rx_data_ready
 		);
@@ -53,8 +57,8 @@ begin
 			clk          => sys_clk,
 			rst          => rst,
 			baud_tick	 => tx_baud_tick,
-			tx_i         => rx_reg,
-			send_en      => tx_send_en,
+			data_bus     => data_bus,
+			send_en      => tx_en,
 			p_en		 => parity_en,
 			tx_busy		 => tx_busy,
 			tx_o         => TX_D
@@ -64,15 +68,29 @@ begin
 		port map(
 			clk          => sys_clk,
 			rst          => rst,
-			rx_data      => rx_reg,
+			data_bus     => data_bus,
 			rx_baud_tick => rx_oversample_tick,
 			data_ready   => rx_data_ready,
-			tx_send_en   => tx_send_en,
+			tx_en   	 => tx_en,
 			tx_busy		 => tx_busy,
 			baud_ctrl	 => baud_ctrl,
 			baud_sel	 => ctrl_baud_sel,
+			w_data 		 => write_en,	 	 
+			r_data 		 => read_en,
+			fifo_empty   => fifo_empty,
 			HEX0         => SEG0,
 			HEX1         => SEG1
+		);
+
+	FIFO : entity work.u_fifo
+		port map(
+			clk          => sys_clk,
+			rst          => rst,
+			we	 		 => write_en,
+			re   		 => read_en,
+			data_bus     => data_bus,
+			data_out     => data_out,
+			empty		 => fifo_empty
 		);
 
 end architecture;
