@@ -19,10 +19,11 @@ transcript
 
 # mplab
 _build/
-cmake/
+**/cmake/uart-tb/default/*
 out/
 **/.vscode/*
 !Testbench/AVR/uart-tb/.vscode/uart-tb.mplab.json
+!Testbench/AVR/uart-tb/cmake/uart-tb/default/user.cmake
 
 
 # vhdl format
