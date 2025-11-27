@@ -89,8 +89,7 @@ begin
 
 	--echo loopback ok
 
-	tx_send_en <= data_ready when (loopback_en = '1') else
-		'0';
+	tx_send_en <= data_ready when (loopback_en = '1') else '0';
 	rx_ok <= led_on;
 	baud_sel <= baud_ctrl;
 	HEX0 <= hex_to_7seg(data_h);
