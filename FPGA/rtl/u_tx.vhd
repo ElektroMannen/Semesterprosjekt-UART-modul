@@ -9,7 +9,7 @@ entity u_tx is
 		clk          : in std_logic;
 		rst          : in std_logic;
 		baud_tick 	 : in std_logic;
-		tx_i         : in std_logic_vector(7 downto 0);
+		data_bus     : in std_logic_vector(7 downto 0);
 		send_en      : in std_logic;
 		p_en         : in std_logic;
 		tx_busy		 : out std_logic;
@@ -30,7 +30,7 @@ architecture rtl of u_tx is
 
 	signal byte_sent : std_logic := '0';
 
-	signal tx_data_out : std_logic := '1';
+	signal data_out : std_logic := '1';
 
 	signal busy : std_logic := '0';
 
@@ -62,7 +62,7 @@ begin
 			--tick_cnt <= 0;
 			bit_cnt <= 0;
 			byte_sent <= '0';
-			tx_data_out <= '1';
+			data_out <= '1';
 			busy <= '0';
 			parity_en <= '0';
 			--parity_bit <= '0';
@@ -79,11 +79,11 @@ begin
 			case state is
 				when idle =>
 					--wait on go signal from ctrl
-					tx_data_out <= '1';
+					data_out <= '1';
 					busy <= '0';
 
 					if send_en = '1' then
-						in_data(7 downto 0) <= tx_i;
+						in_data(7 downto 0) <= data_bus;
 
 						--add parity
 						if parity_en = '1' then
@@ -104,7 +104,7 @@ begin
 				when start =>
 					--signal start-bit
 					--latch_enable <= '0';
-					tx_data_out <= '0';
+					data_out <= '0';
 
 					if baud_tick = '1' then
 						--if tick_cnt = 7 then
@@ -119,12 +119,9 @@ begin
 					--process of sending
 					if baud_tick = '1' then
 
-						tx_data_out <= in_data(bit_cnt);
-
-						--if tick_cnt = 7 then
+						data_out <= in_data(bit_cnt);
 
 							if bit_cnt = bit_cnt_max then
-						--		tick_cnt <= 0;
 								bit_cnt <= 0;
 								byte_sent <= '1';
 								state <= stop;
@@ -132,35 +129,24 @@ begin
 								bit_cnt <= bit_cnt + 1;
 							end if;
 
-						--	tick_cnt <= 0;
-
-						--else
-						--	tick_cnt <= tick_cnt + 1;
-						--end if;
 					end if;
 
 				when stop =>
 					if baud_tick = '1' then
 
 						--signal stop-bit
-						tx_data_out <= '1';
-
-						--if tick_cnt = 7 then
-							state <= idle;
-						--	tick_cnt <= 0;
-						--else
-						--	tick_cnt <= tick_cnt + 1;
-						--end if;
+						data_out <= '1';
+						state <= idle;
 					end if;
 			end case;
 		end if;
 	end process;
 
-	parity_bit <= xor_parity(tx_i);
+	parity_bit <= xor_parity(data_bus);
 
 	bit_cnt_max <= 7 when parity_en = '0' else 8;
 
-	tx_o <= tx_data_out;
+	tx_o <= data_out;
 
 	tx_busy <= busy;
 
