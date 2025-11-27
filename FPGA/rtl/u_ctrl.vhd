@@ -5,13 +5,16 @@ entity u_ctrl is
 	port (
 		clk          : in std_logic;
 		rst          : in std_logic;
-		rx_data      : in std_logic_vector(7 downto 0);
+		data_bus     : in std_logic_vector(7 downto 0);
 		rx_baud_tick : in std_logic;
 		data_ready   : in std_logic;
 		tx_busy		 : in std_logic;
 		baud_ctrl	 : in std_logic_vector(1 downto 0);
+		fifo_empty	 : in std_logic;
 		baud_sel	 : out std_logic_vector(1 downto 0);
-		tx_send_en   : out std_logic;
+		w_data	 	 : out std_logic; -- write to fifo
+		r_data 		 : out std_logic;
+		tx_en   	 : out std_logic;
 		HEX0, HEX1   : out std_logic_vector(7 downto 0);
 		rx_ok        : out std_logic
 	);
@@ -43,10 +46,15 @@ architecture rtl of u_ctrl is
 		return seg;
 	end function;
 
+	--fsm
+	type state_type is (idle, we, re);
+	signal fifo_fsm : state_type := idle;
+
 	--signals
 	signal data_h, data_l : std_logic_vector(3 downto 0); --data high/low
 	signal led_on : std_logic;
 	signal on_time : integer range 0 to 1000 := 0; --latch for 10 rx ticks
+	signal last_data_time : integer range 0 to 1000 := 0;
 	signal loopback_en : std_logic := '1';
 	signal baud_sel_reg : std_logic_vector(1 downto 0);
 begin
@@ -64,22 +72,25 @@ begin
 			if rx_baud_tick = '1' then
 				on_time <= on_time + 1;
 				led_on <= '1';
+				
+
+
 			elsif on_time = 9 then
 				on_time <= 0;
 				led_on <= '0';
 			end if;
+			
+
 			--just latching data until next data
 			if data_ready = '1' then
-				on_time <= 0;
+			
+				--on_time <= 0;
 				--loopback_en <= '1';
-				data_h <= rx_data(7 downto 4);
-				data_l <= rx_data(3 downto 0);
-				--elsif on_time = 999 then
-				--	data_h <= (others => '1');
-				--	data_l <= (others => '1');
-				--else
-				--loopback_en <= '0';
+				data_h <= data_bus(7 downto 4);
+				data_l <= data_bus(3 downto 0);
+
 			end if;
+			
 
 			--TODO: check if tx_busy=1, if not, make it send
 			--		some ASCII symbol on button press
@@ -89,10 +100,55 @@ begin
 
 	--echo loopback ok
 
-	tx_send_en <= data_ready when (loopback_en = '1') else '0';
+
+
+	process(clk, rst)
+	begin
+		if rst = '1' then
+			fifo_fsm <= idle;
+			w_data   <= '0';
+			r_data   <= '0';
+		elsif rising_edge(clk) then
+			w_data <= '0';
+			r_data <= '0';
+
+
+			case fifo_fsm is
+				when idle =>
+					if data_ready = '1' then
+							fifo_fsm <= we;
+					elsif tx_busy = '0' then
+						if rx_baud_tick = '1' and fifo_empty = '0' then
+							fifo_fsm <= re;
+						end if;
+					else
+						fifo_fsm <= idle;
+					end if;
+
+				when we =>
+					w_data   <= '1';
+					fifo_fsm <= idle;
+
+				when re =>
+					r_data   <= '1';
+					if rx_baud_tick = '1' then
+						fifo_fsm <= idle;	
+					end if;
+			end case;
+		end if;
+	end process;
+
+
+	-- enable tx
+	--tx_en <= data_ready when (loopback_en = '1') else '0';
+	
 	rx_ok <= led_on;
 	baud_sel <= baud_ctrl;
+
+
+	-- Display ascii as hex on dev board
 	HEX0 <= hex_to_7seg(data_h);
 	HEX1 <= hex_to_7seg(data_l);
+	--w_data <= '1' when data_ready else '0';
 
 end architecture;

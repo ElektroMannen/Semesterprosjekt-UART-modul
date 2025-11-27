@@ -6,11 +6,12 @@ entity u_fifo is
     port (
         clk      : in std_logic;
         rst      : in std_logic;
+        we       : in std_logic; -- push to fifo
+        re       : in std_logic; -- pop from fifo
+        data_bus : in std_logic_vector(7 downto 0);
         --addr     : in  std_logic_vector(4 downto 0);
-        data_in  : in std_logic_vector(7 downto 0);
         data_out : out std_logic_vector(7 downto 0);
-        we       : in std_logic; --write enable
-        re       : in std_logic
+        empty    : out std_logic
     );
 end entity;
 
@@ -42,7 +43,7 @@ begin
             
             if we = '1' then
                 
-                registers(to_integer(p_ptr)) <= data_in;
+                registers(to_integer(p_ptr)) <= data_bus;
                 
                 if reg_full = '0' then
                     items <= items + 1;
@@ -66,6 +67,6 @@ begin
     end process;
 
     reg_full <= '1' when items = 16 else '0';
-
+    empty <= '1' when items = 0 else '0';
 
 end architecture;

@@ -7,7 +7,7 @@ entity u_rx is
         rst          : in std_logic;
         baud_tick_8x : in std_logic;
         rx_i         : in std_logic;
-        rx_o         : out std_logic_vector(7 downto 0);
+        data_bus     : out std_logic_vector(7 downto 0);
         LEDR0        : out std_logic;
         data_ready   : out std_logic;
         bit_mid      : out std_logic
@@ -209,10 +209,20 @@ begin
         end if;
     end process;
 
+    process(clk)
+    begin
+        if rising_edge(clk) then
+            if data_ready_i = '1' then
+                data_bus <= sh_data;
+            elsif baud_tick_8x = '1' then
+                data_bus <= (others => '0');
+            end if;
+        end if;
+    end process;
+
     bit_mid <= bit_mid_i;
 
-    LEDR0      <= data_ready_i;
-    data_ready <= data_ready_i;
-    rx_o       <= (others => '0') when data_ready_i = '0' else
-        sh_data;
+    LEDR0       <= data_ready_i;
+    data_ready  <= data_ready_i;
+    --data_bus    <= (others => '0') when data_ready_i = '0' else sh_data;
 end architecture;
