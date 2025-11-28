@@ -15,19 +15,6 @@ entity u_baudgen is
 	);
 end entity;
 architecture rtl of u_baudgen is
-	--functions
-	--function baud_rate(
-	--	clk_freq : integer;
-	--	baud : integer;
-	--	os : integer
-	--	) return integer is
-	--	begin
-	--		if os > 0 then
-	--			return clk_freq / (baud * os);
-	--		else
-	--			return clk_freq / baud;
-	--		end if;
-	--	end function;
 
 	--constants
 	constant F_CLK : integer := 50e6;
@@ -75,6 +62,8 @@ begin
 				tx_div <= TX_9600_DIV;
 		end case;
 	end process;
+
+	-- generate tx baud-rate
 	p_baud_tx : process (clk)
 		variable baud_cnt : natural range 0 to TX_9600_DIV - 1;
 	begin

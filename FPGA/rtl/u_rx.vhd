@@ -158,28 +158,33 @@ begin
                         sh_clear     <= '0';
                         data_ready_i <= '0';
                         tick_cnt     <= (others => '0');
-
-                        if rx_sync    = '0' then --data detected
+                        
+                        -- data detected
+                        if rx_sync    = '0' then 
                             state    <= start;
-                            tick_cnt <= (others => '0'); --initialize counter
+                             --initialize counter
+                            tick_cnt <= (others => '0');
                         end if;
 
                     when start =>
                         --sample middle value
                         if tick_cnt = 3 then
+                            -- rx line still pulled low
                             if rx_sync = '0' then
                                 state <= data;
                             else
-                                state <= idle; --glitch
+                                state <= idle; -- glitch (reset)
                             end if;
                         end if;
                         tick_cnt <= tick_cnt + 1;
 
                     when data =>
                         if tick_cnt = 3 then
+                            -- shift-reg reads what is on rx-sync line
                             shift_en <= '1';
                             --tick_cnt <= 0;
 
+                            -- 8 byte sampled correctly go to stop
                             if bit_cnt = 7 then
                                 bit_cnt <= 0;
                                 state <= stop;
@@ -193,6 +198,7 @@ begin
                     when stop =>
                         if tick_cnt = 3 then
 
+                            -- check if stop byte is correct
                             if rx_sync = '1' then
                                 data_ready_i <= '1';
                                 sh_clear     <= '1';
@@ -203,12 +209,12 @@ begin
                         else
                             tick_cnt <= tick_cnt + 1;
                         end if;
-                        --tick_cnt <= (others => '0');
                 end case;
             end if;
         end if;
     end process;
 
+    -- separate data-ready process
     process(clk)
     begin
         if rising_edge(clk) then
@@ -220,9 +226,15 @@ begin
         end if;
     end process;
 
+    -- for testbench ?
     bit_mid <= bit_mid_i;
 
-    LEDR0       <= data_ready_i;
+    -- not sure if this is needed
+    LEDR0       <= data_ready_i; -- docs just said rx needed a signal to indicate data received
+    -- as this one:
     data_ready  <= data_ready_i;
+    
+    -- this one is implemented as a process now i think
+    -- probably ok to delete
     --data_bus    <= (others => '0') when data_ready_i = '0' else sh_data;
 end architecture;

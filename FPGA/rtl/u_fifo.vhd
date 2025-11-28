@@ -44,17 +44,22 @@ begin
             --end loop;
         elsif rising_edge(clk) then
             
+            -- write enable (push)
             if we = '1' then
                 
+                -- push new value to stack
                 registers(to_integer(p_ptr)) <= data_bus;
                 
+                -- push ok as thers available registers
                 if reg_full = '0' then
                     items <= items + 1;
                     p_ptr <= p_ptr + 1;
                 end if;
                 
+            -- read enable (pop)
             elsif re = '1' then
                 
+                -- read first pushed register
                 if items /= 0 then
                     data_out <= registers(to_integer(c_ptr));
                     c_update <= '1';
@@ -62,8 +67,10 @@ begin
                     items <= items - 1;
                 end if;
 
+                -- "pop" byte from register
                 registers(to_integer(c_ptr)) <= (others => '0');
             
+            -- simple way of using same pipeline for ASCII
             elsif ASCIItest = '1' then
                 data_out <= test_ASCII;
             end if;
@@ -71,7 +78,7 @@ begin
         end if;
     end process;
 
-    reg_full <= '1' when items = 16 else '0';
-    empty <= '1' when items = 0 else '0';
+    reg_full <= '1' when items = 16 else '0'; -- all 16 registers full
+    empty <= '1' when items = 0 else '0'; -- all registers empty
 
 end architecture;

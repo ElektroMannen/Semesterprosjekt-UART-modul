@@ -9,20 +9,21 @@ entity u_tx is
 		clk          : in std_logic;
 		rst          : in std_logic;
 		baud_tick 	 : in std_logic;
-		data_in      : in std_logic_vector(7 downto 0);
-		send_en      : in std_logic;
-		p_en         : in std_logic;
+		data_in      : in std_logic_vector(7 downto 0); -- from fifo
+		send_en      : in std_logic; -- enable send from ctrl
+		p_en         : in std_logic; -- parity enable (not tested)
 		tx_busy		 : out std_logic;
-		tx_o         : out std_logic
+		tx_o         : out std_logic -- serialized data output
 	);
 end entity;
 
--- implement FSM
-architecture rtl of u_tx is
 
+architecture rtl of u_tx is
+	-- fsm same as rx
 	type state_type is (idle, start, data, stop);
 	signal state : state_type := idle;
 
+	-- internal register (added 1 bit capacity for parity bit)
 	signal in_data : std_logic_vector(8 downto 0);
 
 	signal tick_cnt : integer range 0 to 7 := 0;
@@ -30,7 +31,7 @@ architecture rtl of u_tx is
 
 	signal byte_sent : std_logic := '0';
 
-	signal data_out : std_logic := '1';
+	signal data_out : std_logic := '1'; -- internal tx-sync
 
 	signal busy : std_logic := '0';
 
@@ -59,69 +60,55 @@ begin
 		if rst = '1' then
 			state <= idle;
 			in_data <= (others => '0');
-			--tick_cnt <= 0;
 			bit_cnt <= 0;
 			byte_sent <= '0';
 			data_out <= '1';
 			busy <= '0';
 			parity_en <= '0';
-			--parity_bit <= '0';
-			--latch_enable <= '0';
 
 		elsif rising_edge(clk) then
 			byte_sent <= '0';
 
-			--if send_en = '1' then
-			--	latch_enable <= '1';
-			--	in_data <= tx_i;
-			--end if;
-
 			case state is
 				when idle =>
-					--wait on go signal from ctrl
+					-- wait on go signal from ctrl
 					data_out <= '1';
 					busy <= '0';
 
+					-- received enable from ctrl module
 					if send_en = '1' then
-
-
-						--tick_cnt <= 0;
 						busy <= '1';
 						state <= start;
-						--latch_enable <= '0';
 					end if;
 
 				when start =>
-					--signal start-bit
-					--latch_enable <= '0';
+					-- signal start-bit
 					data_out <= '0';
+
+					-- put fifo-data in internal send-register
 					in_data(7 downto 0) <= data_in;
 
 						--add parity
 						if parity_en = '1' then
-							if parity_mode = '0' then
-								in_data(8) <= parity_bit;
+							if parity_mode = '0' then 
+								in_data(8) <= parity_bit; -- even ?
 							else
-								in_data(8) <= not parity_bit;
+								in_data(8) <= not parity_bit; -- odd ?
 							end if;
-							-- when (parity_mode = '0') else (not parity_bit);
 						end if;
 
 					if baud_tick = '1' then
-						--if tick_cnt = 7 then
 							state <= data;
-						--	tick_cnt <= 0;
-						--else
-						--	tick_cnt <= tick_cnt + 1;
-						--end if;
 					end if;
 
 				when data =>
 					--process of sending
 					if baud_tick = '1' then
 
+						-- serialize data
 						data_out <= in_data(bit_cnt);
 
+							-- count 8 bit if no parity 9 bit with parity
 							if bit_cnt = bit_cnt_max then
 								bit_cnt <= 0;
 								byte_sent <= '1';
@@ -129,26 +116,23 @@ begin
 							else
 								bit_cnt <= bit_cnt + 1;
 							end if;
-
 					end if;
 
 				when stop =>
+					-- output stop-bit
 					data_out <= '1';
-					if baud_tick = '1' then
 
-						--signal stop-bit
-						state <= idle;
+					-- keep stop-bit on for one baud tick
+					if baud_tick = '1' then
+						state <= idle; -- reset
 					end if;
 			end case;
 		end if;
 	end process;
 
-	parity_bit <= xor_parity(data_in);
-
-	bit_cnt_max <= 7 when parity_en = '0' else 8;
-
-	tx_o <= data_out;
-
-	tx_busy <= busy;
+	parity_bit <= xor_parity(data_in); -- calculate parity bit
+	bit_cnt_max <= 7 when parity_en = '0' else 8; -- parity enable
+	tx_o <= data_out; -- send data
+	tx_busy <= busy; -- indicate sending process to other modules
 
 end architecture;
