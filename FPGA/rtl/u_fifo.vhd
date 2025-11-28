@@ -4,14 +4,15 @@ use ieee.numeric_std.all;
 
 entity u_fifo is
     port (
-        clk      : in std_logic;
-        rst      : in std_logic;
-        we       : in std_logic; -- push to fifo
-        re       : in std_logic; -- pop from fifo
-        data_bus : in std_logic_vector(7 downto 0);
+        clk         : in std_logic;
+        rst         : in std_logic;
+        we          : in std_logic; -- push to fifo
+        re          : in std_logic; -- pop from fifo
+        ASCIItest   : in std_logic; -- test signal based on button
+        data_bus    : in std_logic_vector(7 downto 0);
         --addr     : in  std_logic_vector(4 downto 0);
-        data_out : out std_logic_vector(7 downto 0);
-        empty    : out std_logic
+        data_out    : out std_logic_vector(7 downto 0);
+        empty       : out std_logic
     );
 end entity;
 
@@ -26,6 +27,7 @@ architecture rtl of u_fifo is
     signal c_update : std_logic := '0';
     signal items : integer range 0 to 16 := 0;
     signal reg_full : std_logic;
+    signal test_ASCII : std_logic_vector(7 downto 0) := "10101001"; --0xA9
 
 begin
 
@@ -35,6 +37,7 @@ begin
     begin
         if rst = '1' then
             c_update <= '0';
+            data_out <= (others => '0');
             --reset things
             --for i in registers'range loop
             --    registers(i) <= (others => '0');
@@ -60,7 +63,9 @@ begin
                 end if;
 
                 registers(to_integer(c_ptr)) <= (others => '0');
-                
+            
+            elsif ASCIItest = '1' then
+                data_out <= test_ASCII;
             end if;
             
         end if;

@@ -11,9 +11,11 @@ entity u_ctrl is
 		tx_busy		 : in std_logic;
 		baud_ctrl	 : in std_logic_vector(1 downto 0);
 		fifo_empty	 : in std_logic;
+		test_btn	 : in std_logic;
 		baud_sel	 : out std_logic_vector(1 downto 0);
 		w_data	 	 : out std_logic; -- write to fifo
 		r_data 		 : out std_logic;
+		t_data       : out std_logic;
 		tx_en   	 : out std_logic;
 		HEX0, HEX1   : out std_logic_vector(7 downto 0);
 		rx_ok        : out std_logic
@@ -47,7 +49,7 @@ architecture rtl of u_ctrl is
 	end function;
 
 	--fsm
-	type state_type is (idle, we, re);
+	type state_type is (idle, we, re, test);
 	signal fifo_fsm : state_type := idle;
 
 	--signals
@@ -57,6 +59,8 @@ architecture rtl of u_ctrl is
 	signal last_data_time : integer range 0 to 1000 := 0;
 	signal loopback_en : std_logic := '1';
 	signal baud_sel_reg : std_logic_vector(1 downto 0);
+	signal test_signal : std_logic := '0';
+
 begin
 
 	p1 : process (clk, rst)
@@ -108,18 +112,29 @@ begin
 			fifo_fsm <= idle;
 			w_data   <= '0';
 			r_data   <= '0';
+			test_signal <= '0';
+			tx_en <= '0';
 		elsif rising_edge(clk) then
 			w_data <= '0';
 			r_data <= '0';
 
+			-- latch signal for testing ASCII
+			if test_btn = '1' then
+				test_signal <= '1';
+			end if;
+
 
 			case fifo_fsm is
 				when idle =>
+					tx_en <= '0';
 					if data_ready = '1' then
 							fifo_fsm <= we;
 					elsif tx_busy = '0' then
+						-- handle output from fifo module
 						if rx_baud_tick = '1' and fifo_empty = '0' then
 							fifo_fsm <= re;
+						elsif test_signal = '1' then
+							fifo_fsm <= test;
 						end if;
 					else
 						fifo_fsm <= idle;
@@ -127,12 +142,22 @@ begin
 
 				when we =>
 					w_data   <= '1';
+					tx_en <= '0';
 					fifo_fsm <= idle;
 
 				when re =>
 					r_data   <= '1';
+					tx_en <= '1';
 					if rx_baud_tick = '1' then
 						fifo_fsm <= idle;	
+					end if;
+
+				when test =>
+					test_signal   <= '1';
+					tx_en	<= '1';
+					if rx_baud_tick = '1' then
+						fifo_fsm <= idle;
+						test_signal <= '0';
 					end if;
 			end case;
 		end if;
@@ -142,6 +167,7 @@ begin
 	-- enable tx
 	--tx_en <= data_ready when (loopback_en = '1') else '0';
 	
+	t_data <= test_signal;
 	rx_ok <= led_on;
 	baud_sel <= baud_ctrl;
 
