@@ -9,7 +9,7 @@ entity u_tx is
 		clk          : in std_logic;
 		rst          : in std_logic;
 		baud_tick 	 : in std_logic;
-		data_bus     : in std_logic_vector(7 downto 0);
+		data_in      : in std_logic_vector(7 downto 0);
 		send_en      : in std_logic;
 		p_en         : in std_logic;
 		tx_busy		 : out std_logic;
@@ -83,17 +83,7 @@ begin
 					busy <= '0';
 
 					if send_en = '1' then
-						in_data(7 downto 0) <= data_bus;
 
-						--add parity
-						if parity_en = '1' then
-							if parity_mode = '0' then
-								in_data(8) <= parity_bit;
-							else
-								in_data(8) <= not parity_bit;
-							end if;
-							-- when (parity_mode = '0') else (not parity_bit);
-						end if;
 
 						--tick_cnt <= 0;
 						busy <= '1';
@@ -105,6 +95,17 @@ begin
 					--signal start-bit
 					--latch_enable <= '0';
 					data_out <= '0';
+					in_data(7 downto 0) <= data_in;
+
+						--add parity
+						if parity_en = '1' then
+							if parity_mode = '0' then
+								in_data(8) <= parity_bit;
+							else
+								in_data(8) <= not parity_bit;
+							end if;
+							-- when (parity_mode = '0') else (not parity_bit);
+						end if;
 
 					if baud_tick = '1' then
 						--if tick_cnt = 7 then
@@ -132,17 +133,17 @@ begin
 					end if;
 
 				when stop =>
+					data_out <= '1';
 					if baud_tick = '1' then
 
 						--signal stop-bit
-						data_out <= '1';
 						state <= idle;
 					end if;
 			end case;
 		end if;
 	end process;
 
-	parity_bit <= xor_parity(data_bus);
+	parity_bit <= xor_parity(data_in);
 
 	bit_cnt_max <= 7 when parity_en = '0' else 8;
 

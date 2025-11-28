@@ -5,6 +5,7 @@ entity uart is
 	port (
 		sys_clk    : in std_logic; --50MHz
 		rst_n      : in std_logic;
+		test_n     : in std_logic;
 		Rx_D       : in std_logic;
 		SW0, SW1   : in std_logic;
 		baud_ctrl  : in std_logic_vector(1 downto 0);
@@ -15,7 +16,8 @@ entity uart is
 end entity;
 
 architecture rtl of uart is
-	signal rst : std_logic;
+	signal rst : std_logic; -- inverse rst button (key1)
+	signal test : std_logic; -- inverse test button (key2)
 	signal rx_oversample_tick : std_logic;
 	signal tx_baud_tick : std_logic;
 	signal data_bus : std_logic_vector(7 downto 0);
@@ -26,11 +28,13 @@ architecture rtl of uart is
 	signal ctrl_baud_sel : std_logic_vector(1 downto 0);
 	signal write_en : std_logic;
 	signal read_en : std_logic;
-	signal data_out : std_logic_vector(7 downto 0);
+	signal fifo_data : std_logic_vector(7 downto 0);
 	signal fifo_empty : std_logic;
+	signal t_signal : std_logic;
 	--signal tx_reg			: std_logic;
 begin
 	rst <= not rst_n;
+	test <= not test_n;
 
 	BAUD : entity work.u_baudgen
 		port map(
@@ -57,7 +61,7 @@ begin
 			clk          => sys_clk,
 			rst          => rst,
 			baud_tick	 => tx_baud_tick,
-			data_bus     => data_bus,
+			data_in      => fifo_data,
 			send_en      => tx_en,
 			p_en		 => parity_en,
 			tx_busy		 => tx_busy,
@@ -73,10 +77,12 @@ begin
 			data_ready   => rx_data_ready,
 			tx_en   	 => tx_en,
 			tx_busy		 => tx_busy,
+			test_btn     => test,
 			baud_ctrl	 => baud_ctrl,
 			baud_sel	 => ctrl_baud_sel,
 			w_data 		 => write_en,	 	 
 			r_data 		 => read_en,
+			t_data		 => t_signal,
 			fifo_empty   => fifo_empty,
 			HEX0         => SEG0,
 			HEX1         => SEG1
@@ -88,8 +94,9 @@ begin
 			rst          => rst,
 			we	 		 => write_en,
 			re   		 => read_en,
+			ASCIItest    => t_signal,
 			data_bus     => data_bus,
-			data_out     => data_out,
+			data_out     => fifo_data,
 			empty		 => fifo_empty
 		);
 

@@ -10,6 +10,7 @@ architecture sim of uart_tb is
 
     signal sys_clk : std_logic := '0';
     signal rst_n : std_logic := '0'; --rst low active
+    signal test_n : std_logic := '1';
     signal Rx_D : std_logic := '1'; --idle
     signal SW0 : std_logic := '0';
     signal SW1 : std_logic := '0';
@@ -27,6 +28,7 @@ begin
         port map(
             sys_clk => sys_clk,
             rst_n   => rst_n,
+            test_n  => test_n,
             Rx_D    => Rx_D,
             SW0     => SW0,
             SW1     => SW1,
@@ -87,8 +89,10 @@ begin
         Rx_D <= '0';
         wait for t_baud_9600;
         Rx_D <= '1';
+        test_n <= '0';
         wait for t_baud_9600;
         Rx_D <= '0';
+        test_n <= '1';
         wait for t_baud_9600;
         Rx_D <= '1';
         wait for t_baud_9600;
