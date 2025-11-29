@@ -15,7 +15,6 @@ entity u_rx is
 end entity;
 
 architecture rtl of u_rx is
-
     component rx_shiftreg is
         port (
             clk      : in std_logic;
@@ -30,80 +29,22 @@ architecture rtl of u_rx is
     end component;
 
     signal sh_data : std_logic_vector(7 downto 0);
+    --Oversampeling signals
     signal bit_cnt : integer range 0 to 7 := 0;
-    --signal byte_done : std_logic;
-
     signal bit_mid_i : std_logic := '0';
-
     signal shift_en : std_logic;
+
     -- Signals
     type state_type is (idle, start, data, stop);
     signal state : state_type := idle;
-    --signal bit_cnt : integer range 0 to 7 := 0;
-    --signal tick_cnt : integer range 0 to 7 := 0;
     signal tick_cnt : unsigned(2 downto 0) := (others => '0');
-
-    --signal data_reg : std_logic_vector(7 downto 0) := (others => '0');
     signal rx_sync : std_logic := '1';
     signal data_ready_i : std_logic := '0';
-
-    --signal rx_rst_byte_done : std_logic := '0';
     signal sh_clear : std_logic := '0';
-    --signal data_recieved : std_logic := '0';
-    --signal prev_signal : std_logic_vector(7 downto 0);
 
-    -- Uart rx funksjon
-    --	function f_standard_uart_protocol(
-    --		current_state : state_type;
-    --		rx_sample : std_logic
-    --	) return state_type is
-    --	begin
-    --		case current_state is
-    --			when idle =>
-    --				if rx_sample = '0' then
-    --					return start;
-    --				else
-    --					return idle;
-    --				end if;
 
-    --			when start =>
-    --				return data;
-    --
-    --	when data =>
-    --				return stop;
-    --
-    --			when stop =>
-    --				return idle;
-    --		end case;
-    --end function;
 
-    --Byte lagring
-    --function f_store_byte(
-    --	data_in : std_logic;
-    --	bit_idx : integer;
-    --	data_reg : std_logic_vector
-    --) return std_logic_vector is
-    --	variable tmp : std_logic_vector(data_reg'range) := data_reg;
-    --begin
-    --	tmp(bit_idx) := data_in;
-    --	return tmp;
-    --end function;
 
-    --return true when middle of oversample frequency
-   -- function f_oversampling(cnt : integer) return boolean is
-   -- begin
-   --     return (cnt = 3);
-   -- end function;
-
-    -- sjekker stop bit for å skru av og på LEDR0 
-    --function f_data_ready(state : state_type; rx_sample : std_logic) return std_logic is
-    --begin
-    --if (state = stop) and (rx_sample = '1') then
-    --return '1';
-    --else
-    --return '0';
-    --end if;
-    --end function;
 
     -- Main prosess
 begin
