@@ -42,6 +42,7 @@ architecture rtl of uart is
 	-- Patiry toggle signals
     signal parity_enable : std_logic;
     signal parity_even_odd   : std_logic;
+	signal parity_even : std_logic;
 	
 
 
@@ -64,15 +65,15 @@ begin
 
 	RxD : entity work.u_rx
 		port map(
-			clk           => clk,
+			clk           => sys_clk,
 			rst           => rst,
-			baud_tick_8x  => rx_baud_tick_8x,
-			rx_i          => rx_i,
+			baud_tick_8x  => rx_oversample_tick,
+			rx_i          => Rx_D,
 			parity_enable => parity_enable,
 			parity_even   => parity_even,
-			data_bus      => data_bus_rx,
+			data_bus      => data_bus,
 			LEDR0         => LEDR0,
-			data_ready    => data_ready,
+			data_ready    => rx_data_ready
 		);
 
 	TxD : entity work.u_tx

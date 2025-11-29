@@ -44,22 +44,25 @@ architecture rtl of u_rx is
     signal rx_sync       : std_logic := '1';
 
     -- Majority buffer
-    signal sample_buf    : std_logic_vector(4 downto 0);
+    signal sample_buf    : std_logic_vector(4 downto 0) := (others => '0');
     signal sample_idx    : integer range 0 to 4 := 0;
-    signal majority_bit  : std_logic;
+    signal majority_bit  : std_logic := '1';
 
     -- Parity
     signal parity_bit_rx : std_logic := '0';
+
+    -- Start ok
+    signal start_signal : std_logic := '0';
 
     -- Data ready
     signal data_ready_i  : std_logic := '0';
 
     -- Helper function for parity calculation
-    function calc_parity(data : std_logic_vector) return std_logic is
+    function calc_parity(x : std_logic_vector) return std_logic is
         variable p : std_logic := '0';
     begin
-        for i in data'range loop
-            p := p xor data(i);
+        for i in x'range loop
+            p := p xor x(i);
         end loop;
         return p;
     end function;
@@ -89,11 +92,15 @@ begin
             rx_sync      <= '1';
             shift_en     <= '0';
             sh_clear     <= '0';
+            sample_buf   <= (others => '0');
             sample_idx   <= 0;
+            LEDR0        <= '0';
+            start_signal <= '0';
         elsif rising_edge(clk) then
             rx_sync <= rx_i;
             shift_en <= '0';
             data_ready_i <= '0';
+            LEDR0 <= '0';
 
             if baud_tick_8x = '1' then
                 -- 8x oversampling
@@ -103,40 +110,8 @@ begin
                     tick_cnt <= tick_cnt + 1;
                 end if;
 
-                -- 5-point majority sampling (midbit)
-                if tick_cnt >= 2 and tick_cnt <= 6 and state = data then
-                    sample_buf(sample_idx) <= rx_sync;
-                    sample_idx <= sample_idx + 1;
-                end if;
 
-                if tick_cnt = 6 and state = data then
-                    -- Majority decision
-                    ones := 0;
-                    for i in 0 to 4 loop
-                        if sample_buf(i) = '1' then
-                            ones := ones + 1;
-                        end if;
-                    end loop;
-                    if ones >= 3 then
-                        majority_bit <= '1';
-                    else
-                        majority_bit <= '0';
-                    end if;
-                    shift_en <= '1';
-                    sample_idx <= 0;
 
-                    -- Move to next bit
-                    if bit_cnt = 7 then
-                        bit_cnt <= 0;
-                        if parity_enable = '1' then
-                            state <= parity;
-                        else
-                            state <= stop;
-                        end if;
-                    else
-                        bit_cnt <= bit_cnt + 1;
-                    end if;
-                end if;
 
                 -- UART state machine
                 case state is
@@ -148,11 +123,59 @@ begin
                         end if;
 
                     when start =>
-                        if tick_cnt = 3 then
-                            if rx_sync = '0' then
+                        if tick_cnt = 3 and rx_sync = '0' then
+                            start_signal <= '1';
+                        elsif tick_cnt = 7 then
+                            if start_signal = '1' then
+                                tick_cnt <= (others => '0');
+                                sample_idx <= 0;
                                 state <= data;
+                                start_signal <= '0';
                             else
                                 state <= idle;
+                            end if;
+                        end if;
+                    
+
+                    when data =>
+                        -- 5-point majority sampling (midbit)
+                        -- changed from 2 and 6 to 1 and 5 due to timing issues
+                        -- we are lagging 1 baud tick already
+                        -- so 1 will be earlier
+                        if tick_cnt >= 1 and tick_cnt <= 5 then
+                            sample_buf(sample_idx) <= rx_sync;
+                            if sample_idx < 4 then
+                                sample_idx <= sample_idx + 1;
+                            end if;
+                        end if;
+
+
+                        if tick_cnt = 5 then
+                            -- Majority decision
+                            ones := 0;
+                            for i in 0 to 4 loop
+                                if sample_buf(i) = '1' then
+                                    ones := ones + 1;
+                                end if;
+                            end loop;
+                            if ones >= 3 then
+                                majority_bit <= '1';
+                            else
+                                majority_bit <= '0';
+                            end if;
+                            shift_en <= '1';
+                            sample_idx <= 0;
+
+                            -- Move to next bit
+                            if bit_cnt = 7 then
+                                bit_cnt <= 0;
+                                if parity_enable = '1' then
+                                    state <= parity;
+                                else
+                                    state <= stop;
+                                end if;
+                            else
+                                bit_cnt <= bit_cnt + 1;
                             end if;
                         end if;
 
@@ -203,13 +226,16 @@ begin
         if rising_edge(clk) then
             if data_ready_i = '1' then
                 data_bus <= sh_data;
-            else
+            
+            -- keep data on data bus longer
+            elsif baud_tick_8x = '1' then 
                 data_bus <= (others => '0');
             end if;
         end if;
     end process;
 
-    LEDR0 <= '0'; -- Could use to flag parity error
+    -- had multiple drivers so commented out
+    -- LEDR0 <= '0'; -- Could use to flag parity error 
     data_ready <= data_ready_i;
 
 end architecture;
