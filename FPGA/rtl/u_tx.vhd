@@ -12,6 +12,7 @@ entity u_tx is
 		data_in      : in std_logic_vector(7 downto 0); -- from fifo
 		send_en      : in std_logic; -- enable send from ctrl
 		p_en         : in std_logic; -- parity enable (not tested)
+		even_parity : in std_logic;
 		tx_busy		 : out std_logic;
 		tx_o         : out std_logic -- serialized data output
 	);
