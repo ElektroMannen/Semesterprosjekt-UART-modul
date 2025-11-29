@@ -3,119 +3,59 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 entity u_rx is
     port (
-        clk          : in std_logic;
-        rst          : in std_logic;
+        clk : in std_logic;
+        rst : in std_logic;
         baud_tick_8x : in std_logic;
-        rx_i         : in std_logic;
-        data_bus     : out std_logic_vector(7 downto 0);
-        LEDR0        : out std_logic;
-        data_ready   : out std_logic;
-        bit_mid      : out std_logic
+        rx_i : in std_logic;
+        parity_enable : in std_logic;
+        parity_even : in std_logic;
+        data_bus : out std_logic_vector(7 downto 0);
+        LEDR0 : out std_logic;
+        data_ready : out std_logic
     );
 end entity;
 
 architecture rtl of u_rx is
-
     component rx_shiftreg is
         port (
-            clk      : in std_logic;
-            rst      : in std_logic;
+            clk : in std_logic;
+            rst : in std_logic;
             shift_en : in std_logic;
-            rx_bit   : in std_logic;
-            clear    : in std_logic;
-            data     : out std_logic_vector(7 downto 0)
+            rx_bit : in std_logic;
+            clear : in std_logic;
+            data : out std_logic_vector(7 downto 0)
             --bit_cnt         : out integer range 0 to 7;
             --byte_done       : out std_logic
         );
     end component;
 
     signal sh_data : std_logic_vector(7 downto 0);
+
+    --Oversampeling signals
     signal bit_cnt : integer range 0 to 7 := 0;
-    --signal byte_done : std_logic;
-
     signal bit_mid_i : std_logic := '0';
-
     signal shift_en : std_logic;
-    -- Signals
-    type state_type is (idle, start, data, stop);
-    signal state : state_type := idle;
-    --signal bit_cnt : integer range 0 to 7 := 0;
-    --signal tick_cnt : integer range 0 to 7 := 0;
-    signal tick_cnt : unsigned(2 downto 0) := (others => '0');
 
-    --signal data_reg : std_logic_vector(7 downto 0) := (others => '0');
+    -- Signals
+    type state_type is (idle, start, data, parity, stop);
+    signal state : state_type := idle;
+    signal tick_cnt : unsigned(2 downto 0) := (others => '0');
     signal rx_sync : std_logic := '1';
     signal data_ready_i : std_logic := '0';
-
-    --signal rx_rst_byte_done : std_logic := '0';
     signal sh_clear : std_logic := '0';
-    --signal data_recieved : std_logic := '0';
-    --signal prev_signal : std_logic_vector(7 downto 0);
-
-    -- Uart rx funksjon
-    --	function f_standard_uart_protocol(
-    --		current_state : state_type;
-    --		rx_sample : std_logic
-    --	) return state_type is
-    --	begin
-    --		case current_state is
-    --			when idle =>
-    --				if rx_sample = '0' then
-    --					return start;
-    --				else
-    --					return idle;
-    --				end if;
-
-    --			when start =>
-    --				return data;
-    --
-    --	when data =>
-    --				return stop;
-    --
-    --			when stop =>
-    --				return idle;
-    --		end case;
-    --end function;
-
-    --Byte lagring
-    --function f_store_byte(
-    --	data_in : std_logic;
-    --	bit_idx : integer;
-    --	data_reg : std_logic_vector
-    --) return std_logic_vector is
-    --	variable tmp : std_logic_vector(data_reg'range) := data_reg;
-    --begin
-    --	tmp(bit_idx) := data_in;
-    --	return tmp;
-    --end function;
-
-    --return true when middle of oversample frequency
-   -- function f_oversampling(cnt : integer) return boolean is
-   -- begin
-   --     return (cnt = 3);
-   -- end function;
-
-    -- sjekker stop bit for å skru av og på LEDR0 
-    --function f_data_ready(state : state_type; rx_sample : std_logic) return std_logic is
-    --begin
-    --if (state = stop) and (rx_sample = '1') then
-    --return '1';
-    --else
-    --return '0';
-    --end if;
-    --end function;
+    signal parity_bit_rx : std_logic := '0';
 
     -- Main prosess
 begin
     -- instans av shiftregisteret
     u_shift : rx_shiftreg
     port map(
-        clk      => clk,
-        rst      => rst,
+        clk => clk,
+        rst => rst,
         shift_en => shift_en,
-        rx_bit   => rx_sync,
-        clear    => sh_clear,
-        data     => sh_data
+        rx_bit => rx_sync,
+        clear => sh_clear,
+        data => sh_data
         --bit_cnt         => sh_bit_cnt,
         --byte_done       => sh_byte_done
     );
@@ -124,16 +64,16 @@ begin
     begin
         --Reset logic
         if rst = '1' then
-            state        <= idle;
-            tick_cnt     <= (others => '0');
+            state <= idle;
+            tick_cnt <= (others => '0');
             data_ready_i <= '0';
-            rx_sync      <= '1';
-            shift_en     <= '0';
-            sh_clear     <= '0';
+            rx_sync <= '1';
+            shift_en <= '0';
+            sh_clear <= '0';
 
         elsif rising_edge(clk) then
-            rx_sync      <= rx_i;
-            shift_en     <= '0';
+            rx_sync <= rx_i;
+            shift_en <= '0';
             data_ready_i <= '0';
 
             if baud_tick_8x = '1' then
@@ -147,7 +87,7 @@ begin
                 -- Find middle of bit
                 if tick_cnt = 3 then
                     --SHIFTREG_SIGNAL_HERE <= rx_i; -- Stores bit balue
-                    bit_mid_i  <= '1';
+                    bit_mid_i <= '1';
                 else
                     bit_mid_i <= '0';
                 end if;
@@ -155,14 +95,14 @@ begin
                 -- UART statemachine logic
                 case state is
                     when idle =>
-                        sh_clear     <= '0';
+                        sh_clear <= '0';
                         data_ready_i <= '0';
-                        tick_cnt     <= (others => '0');
-                        
+                        tick_cnt <= (others => '0');
+
                         -- data detected
-                        if rx_sync    = '0' then 
-                            state    <= start;
-                             --initialize counter
+                        if rx_sync = '0' then
+                            state <= start;
+                            --initialize counter
                             tick_cnt <= (others => '0');
                         end if;
 
@@ -180,32 +120,71 @@ begin
 
                     when data =>
                         if tick_cnt = 3 then
-                            -- shift-reg reads what is on rx-sync line
                             shift_en <= '1';
-                            --tick_cnt <= 0;
 
-                            -- 8 byte sampled correctly go to stop
                             if bit_cnt = 7 then
                                 bit_cnt <= 0;
-                                state <= stop;
-                                --data_ready_i <= '1';
+
+                                if parity_enable = '1' then
+                                    state <= parity;
+                                else
+                                    state <= stop;
+                                end if;
+
                             else
                                 bit_cnt <= bit_cnt + 1;
                             end if;
                         end if;
                         tick_cnt <= tick_cnt + 1;
 
+                    when parity =>
+                        if tick_cnt = 3 then
+                            parity_bit_rx <= rx_sync; -- sample received parity bit
+                            state <= stop;
+                        end if;
+                        tick_cnt <= tick_cnt + 1;
+
                     when stop =>
                         if tick_cnt = 3 then
 
-                            -- check if stop byte is correct
+                            -- STOP bit check
                             if rx_sync = '1' then
-                                data_ready_i <= '1';
-                                sh_clear     <= '1';
-                                --rx_rst_byte_done <= '1';
+                                
+                                -- XOR of entire data byte
+                                variable p : std_logic := '0';
+                            begin
+                                for i in 0 to 7 loop
+                                    p := p xor sh_data(i);
+                                end loop;
+
+                                -- even parity means p must equal received bit
+                                -- odd parity means p must NOT equal received bit
+                                if parity_enable = '1' then
+                                    if parity_even = '1' then
+                                        -- EVEN parity
+                                        if p = parity_bit_rx then
+                                            data_ready_i <= '1';
+                                        else
+                                            LEDR0 <= '1'; -- parity error
+                                        end if;
+                                    else
+                                        -- ODD parity
+                                        if p /= parity_bit_rx then
+                                            data_ready_i <= '1';
+                                        else
+                                            LEDR0 <= '1'; -- parity error
+                                        end if;
+                                    end if;
+                                else
+                                    -- parity disabled → always accept data
+                                    data_ready_i <= '1';
+                                end if;
+
+                                sh_clear <= '1';
                             end if;
 
                             state <= idle;
+
                         else
                             tick_cnt <= tick_cnt + 1;
                         end if;
@@ -215,7 +194,7 @@ begin
     end process;
 
     -- separate data-ready process
-    process(clk)
+    process (clk)
     begin
         if rising_edge(clk) then
             if data_ready_i = '1' then
@@ -230,10 +209,10 @@ begin
     bit_mid <= bit_mid_i;
 
     -- not sure if this is needed
-    LEDR0       <= data_ready_i; -- docs just said rx needed a signal to indicate data received
+    LEDR0 <= data_ready_i; -- docs just said rx needed a signal to indicate data received
     -- as this one:
-    data_ready  <= data_ready_i;
-    
+    data_ready <= data_ready_i;
+
     -- this one is implemented as a process now i think
     -- probably ok to delete
     --data_bus    <= (others => '0') when data_ready_i = '0' else sh_data;
