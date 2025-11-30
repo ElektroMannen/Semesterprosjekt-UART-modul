@@ -39,9 +39,9 @@ begin
             c_update <= '0';
             data_out <= (others => '0');
             --reset things
-            --for i in registers'range loop
-            --    registers(i) <= (others => '0');
-            --end loop;
+            for i in registers'range loop
+                registers(i) <= (others => '0');
+            end loop;
         elsif rising_edge(clk) then
             
             -- write enable (push)

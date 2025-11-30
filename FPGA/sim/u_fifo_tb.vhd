@@ -9,10 +9,11 @@ architecture sim of u_fifo_tb is
     signal clk : std_logic := '0';
     signal rst : std_logic := '0';
     --signal addr     : std_logic_vector(4 downto 0) := (others => '0');
-    signal data_in : std_logic_vector(7 downto 0) := (others => '0');
+    signal data_bus : std_logic_vector(7 downto 0) := (others => '0');
     signal data_out : std_logic_vector(7 downto 0);
     signal we : std_logic := '0';
     signal re : std_logic := '0';
+    signal test_ascii : std_logic := '0';
 
 begin
 
@@ -21,7 +22,8 @@ begin
             clk      => clk,
             rst      => rst,
             --addr     => addr,
-            data_in  => data_in,
+            ASCIItest => test_ascii,
+            data_bus  => data_bus,
             data_out => data_out,
             we       => we,
             re       => re
@@ -42,13 +44,13 @@ begin
         rst <= '0';
         wait for 150 ns;
 
-        data_in <= x"AA";
+        data_bus <= x"AA";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"BB";
+        data_bus <= x"BB";
         we <= '1';
         wait for 20 ns;
         we <= '0';
@@ -60,93 +62,93 @@ begin
         wait for 20 ns;
 
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
         
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
         wait for 20 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
@@ -161,7 +163,7 @@ begin
 
         wait for 100 ns;
 
-        data_in <= x"FF";
+        data_bus <= x"FF";
         we <= '1';
         wait for 20 ns;
         we <= '0';
